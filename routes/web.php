@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PostsController;
+use App\Http\Controllers\ScheduleController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -33,6 +34,10 @@ Route::get('/appliance',function(){
 Route::get('/color',function(){
     return Inertia::render('ColorComponent'); 
 })->middleware(['auth', 'verified'])->name('color');;
+
+Route::get('/schedule', [ScheduleController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('schedule');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
