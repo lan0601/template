@@ -1,36 +1,39 @@
 import { useState } from 'react'
+import { router } from '@inertiajs/react'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import Modal from '@/Components/Modal'
+import { usePage } from '@inertiajs/react'
 
-export default function Calendar({ schedules }) {
-    // const events = schedules.map(schedule => ({
-    //     title: schedule.title,
-    //     start: schedule.start_datetime,
-    //     end: schedule.end_datetime,
-    // }))
 
+
+export default function Calendar({ events}) {
+    console.log(events)
     const [showModal, setShowModal] = useState(false)
     const [formData, setFormData] = useState({
-        start: '',
-        end: '',
-        person:''
+        title: '',
+        start_datetime: '',
+        end_datetime: '',
+        person: '',
     })
     // console.log(formData)
     // Handle single click
     const handleDateClick = (selected) => {
-
+        
         const end = new Date(selected.end)
         end.setDate(end.getDate() - 1) // FullCalendar fix (exclusive end)
 
         const start = new Date(selected.startStr).toLocaleDateString('en-CA')
         const formattedEnd = end.toLocaleDateString('en-CA')
-
+        console.log(start)
+        console.log(formattedEnd)
         setFormData({
-            start: start,
-            end: formattedEnd
+            title: '',
+            start_datetime: start,
+            end_datetime: formattedEnd,
+            person: '',
         })
         setShowModal(true)
     };
@@ -38,15 +41,23 @@ export default function Calendar({ schedules }) {
     const handleSubmit = () =>{
         const today = new Date()
         today.setHours(0, 0, 0, 0)
-
+        
         const startDate = new Date(formData.start)
-
         if (startDate < today) {
             alert("You cannot schedule in the past!")
             return
         }
         console.log("Submitting:", formData)
-
+        router.post('/schedule/store', formData, {
+            onError: (errors) => {
+                console.log('Validation Errors:', errors)
+            },
+            onSuccess: () => {
+                console.log('Saved successfully!')
+                setShowModal(false)
+            }
+        })
+        
         // send to backend here
         setShowModal(false)
 
@@ -79,9 +90,10 @@ export default function Calendar({ schedules }) {
                 //     }
 
                 // }}
-                events={[
-                    {title: 'Event 1' , start:'2026-05-19', end: '2026-05-21'},
-                ]}
+                events={events}
+                // events={[
+                //     {title: 'Event 1' , start:'2026-05-19', end: '2026-05-21'},
+                // ]}
             />
             {/* Modal */}
             <Modal show={showModal} onClose={() => setShowModal(false)}>
@@ -103,14 +115,27 @@ export default function Calendar({ schedules }) {
                     {/* Form */}
                     <div className="mt-4 space-y-4">
 
+                        {/* Title */}
+                        <div>
+                            <label className="text-sm font-medium">Title</label>
+                            <input
+                                type="text"
+                                value={formData.title}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, title: e.target.value })
+                                }
+                                className="w-full border rounded p-2 mt-1"
+                                placeholder="Enter Event Title"
+                            />
+                        </div>
                         {/* Start Date */}
                         <div>
                             <label className="text-sm font-medium">Start Date</label>
                             <input
                                 type="date"
-                                value={formData.start}
+                                value={formData.start_datetime}
                                 onChange={(e) =>
-                                    setFormData({ ...formData, start: e.target.value })
+                                    setFormData({ ...formData, start_datetime: e.target.value })
                                 }
                                 className="w-full border rounded p-2 mt-1"
                             />
@@ -121,9 +146,9 @@ export default function Calendar({ schedules }) {
                             <label className="text-sm font-medium">End Date</label>
                             <input
                                 type="date"
-                                value={formData.end}
+                                value={formData.end_datetime}
                                 onChange={(e) =>
-                                    setFormData({ ...formData, end: e.target.value })
+                                    setFormData({ ...formData, end_datetime: e.target.value })
                                 }
                                 className="w-full border rounded p-2 mt-1"
                             />

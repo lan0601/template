@@ -39,6 +39,12 @@ Route::get('/schedule', [ScheduleController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('schedule');
 
+Route::post('/schedule/store', [ScheduleController::class, 'store'])
+    ->middleware(['auth', 'verified']);
+
+Route::post('/schedules/events', [ScheduleController::class, 'get'])
+    ->middleware(['auth', 'verified']);
+    
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
