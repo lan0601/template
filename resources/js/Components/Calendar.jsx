@@ -9,14 +9,14 @@ import { usePage } from '@inertiajs/react'
 
 
 
-export default function Calendar({ events}) {
+export default function Calendar({ events, users }) {
     console.log(events)
     const [showModal, setShowModal] = useState(false)
     const [formData, setFormData] = useState({
         title: '',
         start_datetime: '',
         end_datetime: '',
-        person: '',
+        approved_by: '',
     })
     // console.log(formData)
     // Handle single click
@@ -33,7 +33,7 @@ export default function Calendar({ events}) {
             title: '',
             start_datetime: start,
             end_datetime: formattedEnd,
-            person: '',
+            approved_by: '',
         })
         setShowModal(true)
     };
@@ -66,14 +66,14 @@ export default function Calendar({ events}) {
     return (
         <div className="p-4 bg-white rounded-lg">
             <FullCalendar
-                plugins={[dayGridPlugin, interactionPlugin]}
+                plugins={[dayGridPlugin, interactionPlugin, timeGridPlugin]}
                 headerToolbar ={{
                     left: 'prev,next' ,
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
                 }}
                 initialView="dayGridMonth"
-                editable={true}
+                editable={false}
                 selectable={true}
                 selectMirror={true}
                 select={handleDateClick}
@@ -156,7 +156,7 @@ export default function Calendar({ events}) {
                         {/* Person */}
                         <div>
                             <label className="text-sm font-medium">Person</label>
-                            <input
+                            {/* <input
                                 type="text"
                                 value={formData.person}
                                 onChange={(e) =>
@@ -164,7 +164,24 @@ export default function Calendar({ events}) {
                                 }
                                 className="w-full border rounded p-2 mt-1"
                                 placeholder="Enter name"
-                            />
+                            /> */}
+                            {/* users dropdown */}
+                            <select
+                                value={formData.approved_by}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, approved_by: e.target.value })
+                                }
+                                className="w-full border rounded p-2 mt-1"
+                            >
+                                <option value="">Select a Approver</option>
+
+                                {users.map((user) => (
+                                    <option key={user.id} value={user.id}>
+                                        {user.name}
+                                    </option>
+                                ))}
+                            </select>
+
                         </div>
                     </div>
 

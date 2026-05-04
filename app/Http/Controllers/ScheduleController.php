@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Schedule;
+use App\Models\User;
 use Inertia\Inertia;
 
 class ScheduleController extends Controller
@@ -20,9 +21,11 @@ class ScheduleController extends Controller
                     ->format('Y-m-d'),
             ];
         });
+        $users = User::all();
 
         return Inertia::render('Schedule/Scheduledashboard', [
-            'events' => $events
+            'events' => $events,
+            'users' => $users
         ]);
     }
 
@@ -39,6 +42,7 @@ class ScheduleController extends Controller
             'title' => 'required',
             'start_datetime' => 'required|date',
             'end_datetime' => 'required|date|after_or_equal:start_datetime',
+            'approved_by' => 'required',
         ]);
 
         Schedule::create([
@@ -47,6 +51,7 @@ class ScheduleController extends Controller
             'description' => $request->description,
             'start_datetime' => $request->start_datetime,
             'end_datetime' => $request->end_datetime,
+            'approved_by'=> $request->approved_by,
             'status' => 'pending',
         ]);
 

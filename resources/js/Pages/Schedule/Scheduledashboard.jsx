@@ -5,7 +5,8 @@ import { Head } from '@inertiajs/react';
 import { usePage } from '@inertiajs/react'
 
 export default function Dashboard() {
-    const { events = [] } = usePage().props
+    const { events = [], users=[] } = usePage().props
+    console.log(users)
     return (
         <AuthenticatedLayout
             header={
@@ -21,7 +22,7 @@ export default function Dashboard() {
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6 text-gray-900">
                             {/* You're logged in! */}
-                            <Calendar events={events}/>
+                            <Calendar events={events} users={users}/>
                         </div>
                     </div>
                 </div>
