@@ -6,7 +6,6 @@ import { usePage } from '@inertiajs/react'
 
 export default function Dashboard() {
     const { events = [], users=[] } = usePage().props
-    console.log(users)
     return (
         <AuthenticatedLayout
             header={

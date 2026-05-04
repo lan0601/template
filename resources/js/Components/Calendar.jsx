@@ -5,12 +5,13 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import Modal from '@/Components/Modal'
-import { usePage } from '@inertiajs/react'
+import Swal from 'sweetalert2';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 
 
 export default function Calendar({ events, users }) {
-    console.log(events)
     const [showModal, setShowModal] = useState(false)
     const [formData, setFormData] = useState({
         title: '',
@@ -27,8 +28,6 @@ export default function Calendar({ events, users }) {
 
         const start = new Date(selected.startStr).toLocaleDateString('en-CA')
         const formattedEnd = end.toLocaleDateString('en-CA')
-        console.log(start)
-        console.log(formattedEnd)
         setFormData({
             title: '',
             start_datetime: start,
@@ -41,25 +40,46 @@ export default function Calendar({ events, users }) {
     const handleSubmit = () =>{
         const today = new Date()
         today.setHours(0, 0, 0, 0)
-        
-        const startDate = new Date(formData.start)
+        const startDate = new Date(formData.start_datetime)
+
         if (startDate < today) {
-            alert("You cannot schedule in the past!")
-            return
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'warning',
+                title: 'You cannot schedule in the past!',
+                showConfirmButton: false,
+                timer: 3000
+            });
+        }else{
+            router.post('/schedule/store', formData, {
+                onError: (errors) => {
+                    const errorMessages = Object.values(errors)
+                        .flat()
+                        .join('\n');
+                    Swal.fire({
+                        title: 'Missing Information',
+                        text: errorMessages,
+                        icon: 'warning'
+                    });
+                },
+                onSuccess: () => {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'Saved Succesfully',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                    setShowModal(false)
+                }
+            })
         }
-        console.log("Submitting:", formData)
-        router.post('/schedule/store', formData, {
-            onError: (errors) => {
-                console.log('Validation Errors:', errors)
-            },
-            onSuccess: () => {
-                console.log('Saved successfully!')
-                setShowModal(false)
-            }
-        })
+        
         
         // send to backend here
-        setShowModal(false)
+        // setShowModal(false)
 
     }
 
@@ -121,6 +141,7 @@ export default function Calendar({ events, users }) {
                             <input
                                 type="text"
                                 value={formData.title}
+                                required
                                 onChange={(e) =>
                                     setFormData({ ...formData, title: e.target.value })
                                 }
@@ -134,6 +155,7 @@ export default function Calendar({ events, users }) {
                             <input
                                 type="date"
                                 value={formData.start_datetime}
+                                required
                                 onChange={(e) =>
                                     setFormData({ ...formData, start_datetime: e.target.value })
                                 }
@@ -147,6 +169,7 @@ export default function Calendar({ events, users }) {
                             <input
                                 type="date"
                                 value={formData.end_datetime}
+                                required
                                 onChange={(e) =>
                                     setFormData({ ...formData, end_datetime: e.target.value })
                                 }
@@ -168,6 +191,7 @@ export default function Calendar({ events, users }) {
                             {/* users dropdown */}
                             <select
                                 value={formData.approved_by}
+                                required
                                 onChange={(e) =>
                                     setFormData({ ...formData, approved_by: e.target.value })
                                 }
