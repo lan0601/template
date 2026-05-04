@@ -42,6 +42,9 @@ Route::get('/schedule', [ScheduleController::class, 'index'])
 Route::post('/schedule/store', [ScheduleController::class, 'store'])
     ->middleware(['auth', 'verified']);
 
+Route::post('/schedule/{schedule}/status', [ScheduleController::class, 'updateStatus'])
+    ->middleware(['auth', 'verified']);
+
 Route::post('/schedules/events', [ScheduleController::class, 'get'])
     ->middleware(['auth', 'verified']);
     
