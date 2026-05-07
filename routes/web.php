@@ -47,7 +47,7 @@ Route::post('/schedule/{schedule}/status', [ScheduleController::class, 'updateSt
 
 Route::post('/schedules/events', [ScheduleController::class, 'get'])
     ->middleware(['auth', 'verified']);
-    
+//Dashboard    
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
