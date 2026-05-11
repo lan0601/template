@@ -8,21 +8,21 @@ export default function Portfolio({ auth, laravelVersion, phpVersion }) {
         {
             position: 'Junior IT Developer',
             company: 'Z Connect Inc.',
-            duration: '2023 - Present',
-            description: 'Leading development of enterprise web applications using <strong>Mendix</strong> low-code platform, integrating PHP backends and React frontends for scalable solutions.',
-            techStack: ['PHP', 'Laravel', 'React', 'JavaScript', 'MySQL', 'Tailwind CSS']
+            duration: '2025 - Present',
+            description: 'Leading change requests and migration of legacy .NET applications to modern Mendix low-code platform, ensuring smooth transition, business logic preservation, and scalable enterprise solutions.',
+            techStack: ['Mendix']
         },
         {
-            position: 'Full-Stack Engineer',
-            company: 'StartupXYZ',
-            duration: '2021 - 2023',
+            position: 'Technical Engineer',
+            company: 'ZTE Philippines Inc.',
+            duration: '2024 - 2024',
             description: 'Built responsive web apps using Laravel for APIs and React for dynamic UIs, integrating jQuery for legacy features.',
             techStack: ['PHP', 'Laravel', 'React', 'jQuery', 'JavaScript', 'Inertia.js']
         },
         {
-            position: 'Backend Developer',
-            company: 'DataSolutions Ltd.',
-            duration: '2019 - 2021',
+            position: 'PHP Programmer',
+            company: 'LYB IT Solutions',
+            duration: '2022 - 2024',
             description: 'Developed RESTful APIs and database systems with PHP, optimized performance and security.',
             techStack: ['PHP', 'Laravel', 'MySQL', 'JavaScript', 'API Development']
         },
