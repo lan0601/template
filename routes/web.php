@@ -16,6 +16,13 @@ Route::get('/', function () {
     ]);
 });
 
+Route::get('/portfolio', function () {
+    return Inertia::render('Portfolio', [
+        'laravelVersion' => Application::VERSION,
+        'phpVersion' => PHP_VERSION,
+    ]);
+});
+
 Route::get('/posts', [PostsController::class, 'index'])->middleware(['auth', 'verified'])->name('posts.index');
 Route::get('/posts/new', [PostsController::class, 'new'])->middleware(['auth', 'verified'])->name('posts.new');
 
