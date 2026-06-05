@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PostsController;
 use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\AttendanceController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -41,7 +42,7 @@ Route::get('/appliance',function(){
 Route::get('/color',function(){
     return Inertia::render('ColorComponent'); 
 })->middleware(['auth', 'verified'])->name('color');;
-
+// Schedule routes ----------------------------------------------
 Route::get('/schedule', [ScheduleController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('schedule');
@@ -54,7 +55,11 @@ Route::post('/schedule/{schedule}/status', [ScheduleController::class, 'updateSt
 
 Route::post('/schedules/events', [ScheduleController::class, 'get'])
     ->middleware(['auth', 'verified']);
-//Dashboard    
+// Attendance route ----------------------------------------------
+Route::get('/attendance', [AttendanceController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('attendance');
+//Dashboard route ------------------------------------------------
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');

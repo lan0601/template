@@ -78,6 +78,13 @@ export default function AuthenticatedLayout({ header, children }) {
                         >
                             Schedule
                         </NavLink>
+                        <NavLink
+                            href={route('attendance')}
+                            active={route().current('attendance')}
+                            className="px-4 py-2 rounded hover:bg-black hover:text-white"
+                        >
+                            Attendance
+                        </NavLink>
                     </nav>
                     {/* User */}
                     <div className="mt-auto p-4 border-t">
