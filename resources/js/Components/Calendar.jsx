@@ -123,7 +123,12 @@ export default function Calendar({ events, users }) {
         if (!selectedEvent?.id) return
 
         axios.post(`/schedule/${selectedEvent.id}/status`, { status })
-            .then(() => {
+            .then((response) => {
+                console.log('Schedule status response:', response.data);
+
+                // Close modal immediately
+                handleCloseModal();
+
                 Swal.fire({
                     toast: true,
                     position: 'top-end',

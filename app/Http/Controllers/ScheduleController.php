@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use App\Models\Schedule;
 use App\Models\User;
+use App\Mail\ScheduleStatusNotification;
 use Inertia\Inertia;
 
 class ScheduleController extends Controller
@@ -82,9 +85,89 @@ class ScheduleController extends Controller
             'status' => $request->status,
         ]);
 
+        $smsData = $this->sendStatusSms($schedule, $request->status);
+
+        if ($schedule->user?->email) {
+            Mail::to($schedule->user->email)->send(
+                new ScheduleStatusNotification($schedule, $request->status)
+            );
+        }
+
         return response()->json([
             'success' => true,
             'status' => $schedule->status,
+            'sms' => $smsData,
         ]);
+    }
+
+    private function sendStatusSms(Schedule $schedule, string $status): array
+    {
+        $recipientPhone = $schedule->user?->phone ?? '09550591882';
+        $creatorName = $schedule->user?->name ?? 'User';
+        $statusMessage = $status === 'approved' ? 'approved' : 'rejected';
+        $appointmentDate = \Carbon\Carbon::parse($schedule->start_datetime)->format('F j, Y');
+
+        $message = "Dear {$creatorName},\n\n" .
+            "Your appointment request has been {$statusMessage}.\n\n" .
+            "Appointment Date: {$appointmentDate}\n\n" .
+            "Please arrive at your scheduled appointment. " .
+            "If you need to reschedule or cancel, please contact us in advance.\n\n" .
+            "Thank you.";
+
+        $apiToken = env('IPROG_API_TOKEN');
+        $baseUrl = env('IPROG_BASE_URL', 'https://www.iprogsms.com/api/v1/sms_messages');
+
+        if (! $apiToken) {
+            if (function_exists('logger')) {
+                logger()->warning('IPROG SMS not sent because IPROG_API_TOKEN is not set.', [
+                    'recipientPhone' => $recipientPhone,
+                    'creatorName' => $creatorName,
+                    'statusMessage' => $statusMessage,
+                    'appointmentDate' => $appointmentDate,
+                    'message' => $message,
+                ]);
+            }
+
+            return [
+                'recipientPhone' => $recipientPhone,
+                'creatorName' => $creatorName,
+                'statusMessage' => $statusMessage,
+                'message' => $message,
+                'sent' => false,
+                'reason' => 'missing_api_token',
+                'apiTokenConfigured' => false,
+                'baseUrl' => $baseUrl,
+            ];
+        }
+
+        $response = Http::asForm()->post($baseUrl, [
+            'api_token' => $apiToken,
+            'message' => $message,
+            'phone_number' => $recipientPhone,
+        ]);
+
+        if (function_exists('logger')) {
+            logger()->info('IPROG SMS response', [
+                'recipientPhone' => $recipientPhone,
+                'creatorName' => $creatorName,
+                'statusMessage' => $statusMessage,
+                'appointmentDate' => $appointmentDate,
+                'message' => $message,
+                'responseStatus' => $response->status(),
+                'responseBody' => $response->body(),
+            ]);
+        }
+
+        return [
+            'recipientPhone' => $recipientPhone,
+            'creatorName' => $creatorName,
+            'statusMessage' => $statusMessage,
+            'message' => $message,
+            'sent' => $response->successful(),
+            'responseStatus' => $response->status(),
+            'responseBody' => $response->body(),
+            'apiTokenConfigured' => true,
+            'baseUrl' => $baseUrl,
+        ];
     }
 }
