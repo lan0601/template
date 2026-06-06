@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PostsController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\ClassroomController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -59,6 +60,16 @@ Route::post('/schedules/events', [ScheduleController::class, 'get'])
 Route::get('/attendance', [AttendanceController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('attendance');
+// Classroom routes -----------------------------------------------
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/classroom', [ClassroomController::class, 'index'])->name('classroom');
+    Route::get('/classroom/create', [ClassroomController::class, 'create'])->name('classroom.create');
+    Route::post('/classroom', [ClassroomController::class, 'store'])->name('classroom.store');
+    Route::get('/classroom/{classroom}/qr', [ClassroomController::class, 'qr'])->name('classroom.qr');
+    Route::get('/classroom/{classroom}/edit', [ClassroomController::class, 'edit'])->name('classroom.edit');
+    Route::patch('/classroom/{classroom}', [ClassroomController::class, 'update'])->name('classroom.update');
+    Route::delete('/classroom/{classroom}', [ClassroomController::class, 'destroy'])->name('classroom.destroy');
+});
 //Dashboard route ------------------------------------------------
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
