@@ -42,6 +42,9 @@ export default function Index() {
                             <thead className="bg-gray-50">
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                        QR
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                                         Room Name
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
@@ -71,6 +74,16 @@ export default function Index() {
                                 ) : (
                                     classrooms.map((classroom) => (
                                         <tr key={classroom.id}>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                <img
+                                                    src={`/storage/${classroom.qr_path}`}
+                                                    alt="QR Code"
+                                                    className="w-16 h-16 cursor-pointer hover:scale-110 transition"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#qrModal"
+                                                    onClick={() => setSelectedClassroom(classroom)}
+                                                />
+                                            </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                 {classroom.room_name}
                                             </td>
