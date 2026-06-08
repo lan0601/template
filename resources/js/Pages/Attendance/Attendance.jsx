@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import Calendar from '@/Components/Calendar';
+import QRScanner from '@/Components/QRScanner';
 
 import { Head } from '@inertiajs/react';
 import { usePage } from '@inertiajs/react'
@@ -22,6 +22,7 @@ export default function Dashboard() {
                         <div className="p-6 text-gray-900">
                             {/* You're logged in! */}
                             {/* <Calendar events={events} users={users}/> */}
+                            <QRScanner/>
                         </div>
                     </div>
                 </div>

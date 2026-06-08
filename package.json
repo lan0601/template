@@ -26,6 +26,7 @@
         "@fullcalendar/interaction": "^6.1.20",
         "@fullcalendar/react": "^6.1.20",
         "@fullcalendar/timegrid": "^6.1.20",
+        "html5-qrcode": "^2.3.8",
         "number-to-words": "^1.2.4",
         "react-toastify": "^11.1.0",
         "sweetalert2": "^11.26.24",
