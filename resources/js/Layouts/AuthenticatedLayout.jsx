@@ -78,13 +78,6 @@ export default function AuthenticatedLayout({ header, children }) {
                             Posts
                         </NavLink> */}
                         <NavLink
-                            href={route('schedule')}
-                            active={route().current('schedule')}
-                            className="px-4 py-2 rounded hover:bg-black hover:text-white"
-                        >
-                            Schedule
-                        </NavLink>
-                        <NavLink
                             href={route('attendance')}
                             active={route().current('attendance')}
                             className="px-4 py-2 rounded hover:bg-black hover:text-white"
@@ -92,11 +85,26 @@ export default function AuthenticatedLayout({ header, children }) {
                             Attendance
                         </NavLink>
                         <NavLink
+                            href={route('schedule2')}
+                            active={route().current('schedule2')}
+                            className="px-4 py-2 rounded hover:bg-black hover:text-white"
+                        >
+                            Schedule
+                        </NavLink>
+                        
+                        <NavLink
                             href={route('classroom')}
                             active={route().current('classroom')}
                             className="px-4 py-2 rounded hover:bg-black hover:text-white"
                         >
                             Classroom
+                        </NavLink>
+                        <NavLink
+                            href={route('subject')}
+                            active={route().current('subject')}
+                            className="px-4 py-2 rounded hover:bg-black hover:text-white"
+                        >
+                            Subject
                         </NavLink>
                     </nav>
                     <div className="mt-auto p-4 border-t">

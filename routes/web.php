@@ -3,8 +3,10 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PostsController;
 use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\Schedule2Controller;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\ClassroomController;
+use App\Http\Controllers\SubjectController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -56,6 +58,21 @@ Route::post('/schedule/{schedule}/status', [ScheduleController::class, 'updateSt
 
 Route::post('/schedules/events', [ScheduleController::class, 'get'])
     ->middleware(['auth', 'verified']);
+
+// Schedule2 routes ----------------------------------------------
+Route::get('/schedule2', [Schedule2Controller::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('schedule2');
+
+Route::post('/schedule2/store', [Schedule2Controller::class, 'store'])
+    ->middleware(['auth', 'verified']);
+
+Route::post('/schedule2/{schedule2}/status', [Schedule2Controller::class, 'updateStatus'])
+    ->middleware(['auth', 'verified']);
+
+Route::post('/schedule2s/events', [Schedule2Controller::class, 'get'])
+    ->middleware(['auth', 'verified']);
+
 // Attendance route ----------------------------------------------
 Route::get('/attendance', [AttendanceController::class, 'index'])
     ->middleware(['auth', 'verified'])
@@ -69,6 +86,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/classroom/{classroom}/edit', [ClassroomController::class, 'edit'])->name('classroom.edit');
     Route::patch('/classroom/{classroom}', [ClassroomController::class, 'update'])->name('classroom.update');
     Route::delete('/classroom/{classroom}', [ClassroomController::class, 'destroy'])->name('classroom.destroy');
+});
+// Subject routes -----------------------------------------------
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/subject', [SubjectController::class, 'index'])->name('subject');
+    Route::get('/subject/create', [SubjectController::class, 'create'])->name('subject.create');
+    Route::post('/subject', [SubjectController::class, 'store'])->name('subject.store');
+    Route::get('/subject/{subject}/edit', [SubjectController::class, 'edit'])->name('subject.edit');
+    Route::patch('/subject/{subject}', [SubjectController::class, 'update'])->name('subject.update');
+    Route::delete('/subject/{subject}', [SubjectController::class, 'destroy'])->name('subject.destroy');
 });
 //Dashboard route ------------------------------------------------
 Route::get('/dashboard', function () {

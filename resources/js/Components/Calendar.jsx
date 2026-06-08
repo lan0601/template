@@ -263,6 +263,27 @@ export default function Calendar({ events, users }) {
                                 />
                             </div>
 
+                            {/* Day of the Week */}
+                            <div>
+                                <label className="text-sm font-medium">Day of the Week</label>
+                                <select
+                                    value={formData.day_of_week}
+                                    onChange={(e) =>
+                                        setFormData({ ...formData, day_of_week: e.target.value })
+                                    }
+                                    className="w-full border rounded p-2 mt-1"
+                                >
+                                    <option value="">Select Day</option>
+                                    <option value="Monday">Monday</option>
+                                    <option value="Tuesday">Tuesday</option>
+                                    <option value="Wednesday">Wednesday</option>
+                                    <option value="Thursday">Thursday</option>
+                                    <option value="Friday">Friday</option>
+                                    <option value="Saturday">Saturday</option>
+                                    <option value="Sunday">Sunday</option>
+                                </select>
+                            </div>
+
                             {/* Start Date */}
                             <div>
                                 <label className="text-sm font-medium">Start Date</label>

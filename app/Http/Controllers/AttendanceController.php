@@ -7,13 +7,19 @@ use Illuminate\Support\Facades\Http;
 use App\Models\Schedule;
 use App\Models\User;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
 
 class AttendanceController extends Controller
 {
     public function index()
     {
-        // $userId = auth()->id();
-
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], 401);
+        }
+        
         // $events = Schedule::with('approver')
         //     ->where(function ($query) use ($userId) {
         //         $query->where('user_id', $userId)

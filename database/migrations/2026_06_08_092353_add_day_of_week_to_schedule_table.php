@@ -11,8 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('classrooms', function (Blueprint $table) {
-            $table->string('qr_path')->nullable()->after('room_number');
+        Schema::table('schedules', function (Blueprint $table) {
+            //
+        $table->string('day_of_week', 10)->after('description')->default('Monday');
         });
     }
 
@@ -21,8 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('classrooms', function (Blueprint $table) {
-            $table->dropColumn('qr_path');
+        Schema::table('schedule', function (Blueprint $table) {
+            //
         });
     }
 };
