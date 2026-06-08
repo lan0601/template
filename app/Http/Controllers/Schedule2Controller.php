@@ -26,10 +26,13 @@ class Schedule2Controller extends Controller
                 return [
                     'id' => $schedule->id,
                     'title' => $schedule->title,
-                    'start' => \Carbon\Carbon::parse($schedule->start_datetime)->format('Y-m-d'),
-                    'end' => \Carbon\Carbon::parse($schedule->end_datetime)
-                        ->addDay()
-                        ->format('Y-m-d'),
+                    'day' => $schedule->day,
+                    'start_time' => $schedule->start_time,
+                    'end_time' => $schedule->end_time,
+                    // 'start' => \Carbon\Carbon::parse($schedule->start_datetime)->format('Y-m-d H:i'),
+                    // 'end' => \Carbon\Carbon::parse($schedule->end_datetime)
+                    //     ->addDay()
+                    //     ->format('Y-m-d H:i'),
                     'description' => $schedule->description,
                     'status' => $schedule->status,
                     'approved_by' => $schedule->approved_by,
@@ -38,6 +41,7 @@ class Schedule2Controller extends Controller
                     'textColor' => 'white',
                 ];
             });
+            dd($events);
         $users = User::all();
 
         return Inertia::render('Schedule2/Schedule2dashboard', [
@@ -57,6 +61,7 @@ class Schedule2Controller extends Controller
 
         $request->validate([
             'title' => 'required',
+            'day' => 'required',
             'start_datetime' => 'required|date',
             'end_datetime' => 'required|date|after_or_equal:start_datetime',
             'approved_by' => 'required',
@@ -66,8 +71,9 @@ class Schedule2Controller extends Controller
             'user_id' => auth()->id(),
             'title' => $request->title,
             'description' => $request->description,
-            'start_datetime' => $request->start_datetime,
-            'end_datetime' => $request->end_datetime,
+            'day' => $request->day,
+            'start_time' => $request->start_datetime,
+            'end_time' => $request->end_datetime,
             'approved_by'=> $request->approved_by,
             'status' => 'pending',
         ]);

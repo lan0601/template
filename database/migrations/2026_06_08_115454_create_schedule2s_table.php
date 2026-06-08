@@ -26,7 +26,7 @@ return new class extends Migration
             // $table->dateTime('start_datetime');
             // $table->dateTime('end_datetime');
 
-            // $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
 
             $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete();
 

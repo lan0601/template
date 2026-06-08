@@ -23,6 +23,7 @@ export default function Calendar({ events, users }) {
     const [formData, setFormData] = useState({
         title: '',
         description: '',
+        day: '',
         start_datetime: '',
         end_datetime: '',
         approved_by: '',
@@ -41,9 +42,12 @@ export default function Calendar({ events, users }) {
 
         const start = new Date(selected.startStr).toLocaleDateString('en-CA')
         const formattedEnd = end.toLocaleDateString('en-CA')
+        console.log(start);
+        console.log(formattedEnd);
         setFormData({
             title: '',
             description: '',
+            day: '',
             start_datetime: start,
             end_datetime: formattedEnd,
             approved_by: '',
@@ -70,6 +74,7 @@ export default function Calendar({ events, users }) {
             status: event.extendedProps.status || 'pending',
             approved_by: event.extendedProps.approved_by || null,
             approved_by_name: event.extendedProps.approved_by_name || 'Not assigned',
+            day: event.extendedProps.day || '',
             start_datetime: start,
             end_datetime: end || start,
         })
@@ -93,7 +98,7 @@ export default function Calendar({ events, users }) {
                 timer: 3000
             });
         }else{
-            router.post('/schedule/store', formData, {
+            router.post('/schedule2/store', formData, {
                 onError: (errors) => {
                     const errorMessages = Object.values(errors)
                         .flat()
@@ -264,12 +269,13 @@ export default function Calendar({ events, users }) {
                             </div>
 
                             {/* Day of the Week */}
+                            {/* Day of the Week */}
                             <div>
                                 <label className="text-sm font-medium">Day of the Week</label>
                                 <select
-                                    value={formData.day_of_week}
+                                    value={formData.day}
                                     onChange={(e) =>
-                                        setFormData({ ...formData, day_of_week: e.target.value })
+                                        setFormData({ ...formData, day: e.target.value })
                                     }
                                     className="w-full border rounded p-2 mt-1"
                                 >
@@ -288,7 +294,7 @@ export default function Calendar({ events, users }) {
                             <div>
                                 <label className="text-sm font-medium">Start Date</label>
                                 <input
-                                    type="date"
+                                    type="datetime-local"
                                     value={formData.start_datetime}
                                     required
                                     onChange={(e) =>
@@ -302,7 +308,7 @@ export default function Calendar({ events, users }) {
                             <div>
                                 <label className="text-sm font-medium">End Date</label>
                                 <input
-                                    type="date"
+                                    type="datetime-local"
                                     value={formData.end_datetime}
                                     required
                                     onChange={(e) =>
