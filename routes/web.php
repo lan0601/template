@@ -67,7 +67,7 @@ Route::get('/schedule2', [Schedule2Controller::class, 'index'])
 Route::post('/schedule2/store', [Schedule2Controller::class, 'store'])
     ->middleware(['auth', 'verified']);
 
-Route::post('/schedule2/{schedule2}/status', [Schedule2Controller::class, 'updateStatus'])
+Route::post('/schedule2/{schedule}/status', [Schedule2Controller::class, 'updateStatus'])
     ->middleware(['auth', 'verified']);
 
 Route::post('/schedule2s/events', [Schedule2Controller::class, 'get'])

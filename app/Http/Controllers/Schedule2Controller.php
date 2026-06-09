@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use App\Models\Schedule2;
+use App\Models\Classroom;
 use App\Models\User;
 use App\Mail\ScheduleStatusNotification;
 use Inertia\Inertia;
@@ -26,27 +27,36 @@ class Schedule2Controller extends Controller
                 return [
                     'id' => $schedule->id,
                     'title' => $schedule->title,
-                    'day' => $schedule->day,
-                    'start_time' => $schedule->start_time,
-                    'end_time' => $schedule->end_time,
-                    // 'start' => \Carbon\Carbon::parse($schedule->start_datetime)->format('Y-m-d H:i'),
-                    // 'end' => \Carbon\Carbon::parse($schedule->end_datetime)
-                    //     ->addDay()
-                    //     ->format('Y-m-d H:i'),
+
+                    'daysOfWeek' => [$schedule->day], // Monday
+
+                    'startTime' => \Carbon\Carbon::parse($schedule->start_time)->format('H:i:s'),
+                    'endTime' => \Carbon\Carbon::parse($schedule->end_time)->format('H:i:s'),
+
+                    'startRecur' => $schedule->start_date,
+                    'endRecur' => $schedule->end_date,
+
                     'description' => $schedule->description,
                     'status' => $schedule->status,
                     'approved_by' => $schedule->approved_by,
                     'approved_by_name' => $schedule->approver?->name,
-                    'color' => $schedule->status === 'approved' ? 'green' : ($schedule->status === 'rejected' ? 'red' : 'blue'),
+
+                    'color' => $schedule->status === 'approved'
+                        ? 'green'
+                        : ($schedule->status === 'rejected' ? 'red' : 'blue'),
+
                     'textColor' => 'white',
                 ];
             });
-            dd($events);
+            // dd($events);
         $users = User::all();
+        $classrooms = Classroom::all();
+        // dd($users, $classrooms);
 
         return Inertia::render('Schedule2/Schedule2dashboard', [
             'events' => $events,
-            'users' => $users
+            'users' => $users,
+            'classrooms' => $classrooms,
         ]);
     }
 
@@ -61,9 +71,12 @@ class Schedule2Controller extends Controller
 
         $request->validate([
             'title' => 'required',
+            'classroom_id' => 'required',
             'day' => 'required',
-            'start_datetime' => 'required|date',
-            'end_datetime' => 'required|date|after_or_equal:start_datetime',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i|after_or_equal:start_time',
             'approved_by' => 'required',
         ]);
 
@@ -71,17 +84,21 @@ class Schedule2Controller extends Controller
             'user_id' => auth()->id(),
             'title' => $request->title,
             'description' => $request->description,
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date,
             'day' => $request->day,
-            'start_time' => $request->start_datetime,
-            'end_time' => $request->end_datetime,
+            'start_time' => $request->start_time,
+            'end_time' => $request->end_time,
+            'classroom_id' => $request->classroom_id,
             'approved_by'=> $request->approved_by,
             'status' => 'pending',
+            
         ]);
 
         return back();
     }
 
-    public function updateStatus(Request $request, Schedule $schedule)
+    public function updateStatus(Request $request, Schedule2 $schedule)
     {
         $request->validate([
             'status' => 'required|in:approved,rejected',
@@ -92,7 +109,7 @@ class Schedule2Controller extends Controller
         ]);
 
         $smsData = $this->sendStatusSms($schedule, $request->status);
-
+        
         if ($schedule->user?->email) {
             Mail::to($schedule->user->email)->send(
                 new ScheduleStatusNotification($schedule, $request->status)
@@ -103,22 +120,30 @@ class Schedule2Controller extends Controller
             'success' => true,
             'status' => $schedule->status,
             'sms' => $smsData,
+            'schedule' => $schedule,
         ]);
     }
 
-    private function sendStatusSms(Schedule $schedule, string $status): array
+    private function sendStatusSms(Schedule2 $schedule, string $status): array
     {
         $recipientPhone = $schedule->user?->phone ?? '09550591882';
         $creatorName = $schedule->user?->name ?? 'User';
         $statusMessage = $status === 'approved' ? 'approved' : 'rejected';
         $appointmentDate = \Carbon\Carbon::parse($schedule->start_datetime)->format('F j, Y');
 
-        $message = "Dear {$creatorName},\n\n" .
-            "Your appointment request has been {$statusMessage}.\n\n" .
-            "Appointment Date: {$appointmentDate}\n\n" .
-            "Please arrive at your scheduled appointment. " .
-            "If you need to reschedule or cancel, please contact us in advance.\n\n" .
-            "Thank you.";
+        if ($status === 'approved') {
+            $message = "Dear {$creatorName},\n\n" .
+                "Good news! Your appointment has been APPROVED.\n\n" .
+                "Appointment Date: {$appointmentDate}\n\n" .
+                "Please arrive on time for your scheduled appointment.\n\n" .
+                "Thank you.";
+        } else {
+            $message = "Dear {$creatorName},\n\n" .
+                "We regret to inform you that your appointment has been REJECTED.\n\n" .
+                "Appointment Date: {$appointmentDate}\n\n" .
+                "You may contact us to reschedule or request another slot.\n\n" .
+                "Thank you.";
+        }
 
         $apiToken = env('IPROG_API_TOKEN');
         $baseUrl = env('IPROG_BASE_URL', 'https://www.iprogsms.com/api/v1/sms_messages');

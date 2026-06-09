@@ -12,7 +12,8 @@ import 'react-toastify/dist/ReactToastify.css';
 
 
 
-export default function Calendar({ events, users }) {
+export default function Calendar({ events, users, classrooms }) {
+
     const { auth } = usePage().props
     const currentUserId = auth?.user?.id
     const [showModal, setShowModal] = useState(false)
@@ -23,11 +24,30 @@ export default function Calendar({ events, users }) {
     const [formData, setFormData] = useState({
         title: '',
         description: '',
+        start_date: '',
+        end_date: '',
         day: '',
-        start_datetime: '',
-        end_datetime: '',
+        start_time: '',
+        end_time: '',
         approved_by: '',
+        room_id: '',
     })
+
+    const addOneDay = (dateStr) => {
+        if (!dateStr) return "";
+        const d = new Date(dateStr);
+        d.setDate(d.getDate() + 1);
+        return d.toISOString().split("T")[0];
+    };
+
+    const formatTime = (date) => {
+        if (!date) return '';
+        return new Date(date).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+        });
+    };
 
     const handleCloseModal = () => {
         setShowModal(false)
@@ -42,14 +62,15 @@ export default function Calendar({ events, users }) {
 
         const start = new Date(selected.startStr).toLocaleDateString('en-CA')
         const formattedEnd = end.toLocaleDateString('en-CA')
-        console.log(start);
-        console.log(formattedEnd);
+
         setFormData({
             title: '',
             description: '',
+            start_date: start,
+            end_date: formattedEnd,
             day: '',
-            start_datetime: start,
-            end_datetime: formattedEnd,
+            start_time: '',
+            end_time: '',
             approved_by: '',
         })
         setModalMode('create')
@@ -60,13 +81,12 @@ export default function Calendar({ events, users }) {
         const event = clickInfo.event
         const start = event.start ? event.start.toLocaleDateString('en-CA') : ''
         let end = ''
-
         if (event.end) {
             const endDate = new Date(event.end)
             endDate.setDate(endDate.getDate() - 1)
             end = endDate.toLocaleDateString('en-CA')
         }
-
+        
         setSelectedEvent({
             id: event.id,
             title: event.title,
@@ -75,8 +95,10 @@ export default function Calendar({ events, users }) {
             approved_by: event.extendedProps.approved_by || null,
             approved_by_name: event.extendedProps.approved_by_name || 'Not assigned',
             day: event.extendedProps.day || '',
-            start_datetime: start,
-            end_datetime: end || start,
+            start_date: start,
+            end_date: addOneDay(end) || start,
+            start_time: formatTime(event.start) || '',
+            end_time: formatTime(event.end) || '',
         })
         setSelectedCalendarEvent(event)
         setModalMode('details')
@@ -86,7 +108,7 @@ export default function Calendar({ events, users }) {
     const handleSubmit = () =>{
         const today = new Date()
         today.setHours(0, 0, 0, 0)
-        const startDate = new Date(formData.start_datetime)
+        const startDate = new Date(formData.start_date)
 
         if (startDate < today) {
             Swal.fire({
@@ -127,7 +149,7 @@ export default function Calendar({ events, users }) {
     const handleStatusChange = async (status) => {
         if (!selectedEvent?.id) return
 
-        axios.post(`/schedule/${selectedEvent.id}/status`, { status })
+        axios.post(`/schedule2/${selectedEvent.id}/status`, { status })
             .then((response) => {
                 console.log('Schedule status response:', response.data);
 
@@ -168,6 +190,9 @@ export default function Calendar({ events, users }) {
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
                 }}
+                validRange={{
+                    start: new Date(), // 👈 only today onward
+                }}
                 initialView="dayGridMonth"
                 editable={false}
                 selectable={true}
@@ -189,7 +214,12 @@ export default function Calendar({ events, users }) {
                 eventClick={handleEventClick}
                 events={events}
                 // events={[
-                //     {title: 'Event 1' , start:'2026-05-19', end: '2026-05-21'},
+                //     {title: 'Event 1' , 
+                //     daysOfWeek: [1], // Monday
+                //     startRecur: '2024-06-01',
+                //     endRecur: '2026-07-01',
+                //     startTime:'09:21',
+                //     endTime: '10:21'},
                 // ]}
             />
             {/* Modal */}
@@ -219,11 +249,19 @@ export default function Calendar({ events, users }) {
                             </div>
                             <div>
                                 <label className="text-sm font-medium">Start Date</label>
-                                <p className="mt-1 text-gray-700">{selectedEvent?.start_datetime}</p>
+                                <p className="mt-1 text-gray-700">{selectedEvent?.start_date}</p>
                             </div>
                             <div>
                                 <label className="text-sm font-medium">End Date</label>
-                                <p className="mt-1 text-gray-700">{selectedEvent?.end_datetime}</p>
+                                <p className="mt-1 text-gray-700">{selectedEvent?.end_date}</p>
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium">Start Time</label>
+                                <p className="mt-1 text-gray-700">{selectedEvent?.start_time}</p>
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium">End Time</label>
+                                <p className="mt-1 text-gray-700">{selectedEvent?.end_time}</p>
                             </div>
                             <div>
                                 <label className="text-sm font-medium">Status</label>
@@ -268,7 +306,57 @@ export default function Calendar({ events, users }) {
                                 />
                             </div>
 
-                            {/* Day of the Week */}
+                            {/* Room */}
+                            <div>
+                                <label className="text-sm font-medium">Room</label>
+                                <select
+                                    value={formData.classroom_id}
+                                    required
+                                    onChange={(e) =>
+                                        setFormData({ ...formData, classroom_id: e.target.value })
+                                    }
+                                    className="w-full border rounded p-2 mt-1"
+                                >
+                                    <option value="">Select a Room</option>
+
+                                    {classrooms.map((classroom) => (
+                                        <option key={classroom.id} value={classroom.id}>
+                                            {classroom.room_name} ({classroom.room_number})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Start Date */}
+                            <div>
+                                <label className="text-sm font-medium">Start Date</label>
+                                <input
+                                    // type="datetime-local"
+                                    type="date"
+                                    value={formData.start_date}
+                                    required
+                                    onChange={(e) =>
+                                        setFormData({ ...formData, start_date: e.target.value })
+                                    }
+                                    className="w-full border rounded p-2 mt-1"
+                                />
+                            </div>
+
+                            {/* End Date */}
+                            <div>
+                                <label className="text-sm font-medium">End Date</label>
+                                <input
+                                    // type="datetime-local"
+                                    type="date"
+                                    value={formData.end_date}
+                                    required
+                                    onChange={(e) =>
+                                        setFormData({ ...formData, end_date: e.target.value })
+                                    }
+                                    className="w-full border rounded p-2 mt-1"
+                                />
+                            </div>
+
                             {/* Day of the Week */}
                             <div>
                                 <label className="text-sm font-medium">Day of the Week</label>
@@ -280,43 +368,46 @@ export default function Calendar({ events, users }) {
                                     className="w-full border rounded p-2 mt-1"
                                 >
                                     <option value="">Select Day</option>
-                                    <option value="Monday">Monday</option>
-                                    <option value="Tuesday">Tuesday</option>
-                                    <option value="Wednesday">Wednesday</option>
-                                    <option value="Thursday">Thursday</option>
-                                    <option value="Friday">Friday</option>
-                                    <option value="Saturday">Saturday</option>
-                                    <option value="Sunday">Sunday</option>
+                                    <option value="0">Monday</option>
+                                    <option value="1">Tuesday</option>
+                                    <option value="2">Wednesday</option>
+                                    <option value="3">Thursday</option>
+                                    <option value="4">Friday</option>
+                                    <option value="5">Saturday</option>
+                                    <option value="6">Sunday</option>
                                 </select>
                             </div>
 
-                            {/* Start Date */}
+                            {/* Start Time */}
                             <div>
-                                <label className="text-sm font-medium">Start Date</label>
+                                <label className="text-sm font-medium">Start Time</label>
                                 <input
-                                    type="datetime-local"
-                                    value={formData.start_datetime}
+                                    // type="datetime-local"
+                                    type="time"
+                                    value={formData.start_time}
                                     required
                                     onChange={(e) =>
-                                        setFormData({ ...formData, start_datetime: e.target.value })
+                                        setFormData({ ...formData, start_time: e.target.value })
                                     }
                                     className="w-full border rounded p-2 mt-1"
                                 />
                             </div>
 
-                            {/* End Date */}
+                            {/* End Time */}
                             <div>
-                                <label className="text-sm font-medium">End Date</label>
+                                <label className="text-sm font-medium">End Time</label>
                                 <input
-                                    type="datetime-local"
-                                    value={formData.end_datetime}
+                                    // type="datetime-local"
+                                    type="time"
+                                    value={formData.end_time}
                                     required
                                     onChange={(e) =>
-                                        setFormData({ ...formData, end_datetime: e.target.value })
+                                        setFormData({ ...formData, end_time: e.target.value })
                                     }
                                     className="w-full border rounded p-2 mt-1"
                                 />
                             </div>
+
                             {/* Person */}
                             <div>
                                 <label className="text-sm font-medium">Person</label>

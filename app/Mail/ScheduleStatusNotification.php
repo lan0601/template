@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\Schedule;
+use App\Models\Schedule2;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -15,7 +16,7 @@ class ScheduleStatusNotification extends Mailable
     use Queueable, SerializesModels;
 
     public function __construct(
-        public Schedule $schedule,
+        public Schedule2 $schedule,
         public string $status,
     ) {}
 
