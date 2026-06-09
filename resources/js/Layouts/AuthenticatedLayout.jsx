@@ -85,6 +85,13 @@ export default function AuthenticatedLayout({ header, children }) {
                             Attendance
                         </NavLink>
                         <NavLink
+                            href={route('enroll')}
+                            active={route().current('enroll')}
+                            className="px-4 py-2 rounded hover:bg-black hover:text-white"
+                        >
+                            Enroll
+                        </NavLink>
+                        <NavLink
                             href={route('schedule2')}
                             active={route().current('schedule2')}
                             className="px-4 py-2 rounded hover:bg-black hover:text-white"

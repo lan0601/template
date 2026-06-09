@@ -7,6 +7,7 @@ use App\Http\Controllers\Schedule2Controller;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\SubjectController;
+use App\Http\Controllers\EnrollController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -45,6 +46,17 @@ Route::get('/appliance',function(){
 Route::get('/color',function(){
     return Inertia::render('ColorComponent'); 
 })->middleware(['auth', 'verified'])->name('color');;
+// Enroll routes -----------------------------------------------
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/enroll', [EnrollController::class, 'index'])->name('enroll');
+    Route::get('/enroll/create', [EnrollController::class, 'create'])->name('enroll.create');
+    Route::post('/enroll', [EnrollController::class, 'store'])->name('enroll.store');
+    // Route::post('/subject', [SubjectController::class, 'store'])->name('subject.store');
+    Route::get('/enroll/{student}/edit', [EnrollController::class, 'edit'])->name('enroll.edit');
+    Route::patch('/enroll/{student}', [EnrollController::class, 'update'])->name('enroll.update');
+    // Route::patch('/subject/{subject}', [SubjectController::class, 'update'])->name('subject.update');
+    // Route::delete('/subject/{subject}', [SubjectController::class, 'destroy'])->name('subject.destroy');
+});
 // Schedule routes ----------------------------------------------
 Route::get('/schedule', [ScheduleController::class, 'index'])
     ->middleware(['auth', 'verified'])
