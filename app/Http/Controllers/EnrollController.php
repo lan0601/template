@@ -81,7 +81,6 @@ class EnrollController extends Controller
      */
     public function edit(User $student)
     {
-        dd($student);
         $users = User::select(['id', 'name', 'email'])->get();
         $subjects = Subject::select(['id', 'subject_name', 'subject_code'])->get();
 

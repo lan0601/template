@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Html5QrcodeScanner } from "html5-qrcode";
 
-export default function QRScanner() {
+export default function QRScanner({ onScan }) {
     useEffect(() => {
         const scanner = new Html5QrcodeScanner(
             "reader",
@@ -16,10 +16,13 @@ export default function QRScanner() {
             (decodedText) => {
                 console.log("QR Result:", decodedText);
 
+                // Send the scanned value to the parent
+                onScan(decodedText);
+
                 // Stop scanner after successful scan
-                scanner.clear();
+                // scanner.clear();
             },
-            (error) => {
+            () => {
                 // Ignore scan errors
             }
         );

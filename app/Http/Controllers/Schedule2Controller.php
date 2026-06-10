@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use App\Models\Schedule2;
 use App\Models\Classroom;
+use App\Models\Subject;
 use App\Models\User;
 use App\Mail\ScheduleStatusNotification;
 use Inertia\Inertia;
@@ -51,12 +52,14 @@ class Schedule2Controller extends Controller
             // dd($events);
         $users = User::all();
         $classrooms = Classroom::all();
+        $subjects = Subject::all();
         // dd($users, $classrooms);
 
         return Inertia::render('Schedule2/Schedule2dashboard', [
             'events' => $events,
             'users' => $users,
             'classrooms' => $classrooms,
+            'subjects' => $subjects,
         ]);
     }
 
@@ -72,6 +75,7 @@ class Schedule2Controller extends Controller
         $request->validate([
             'title' => 'required',
             'classroom_id' => 'required',
+            'subject_id' => 'required',
             'day' => 'required',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
@@ -90,6 +94,7 @@ class Schedule2Controller extends Controller
             'start_time' => $request->start_time,
             'end_time' => $request->end_time,
             'classroom_id' => $request->classroom_id,
+            'subject_id' => $request->subject_id,
             'approved_by'=> $request->approved_by,
             'status' => 'pending',
             

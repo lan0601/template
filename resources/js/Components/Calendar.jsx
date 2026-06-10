@@ -12,8 +12,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 
 
-export default function Calendar({ events, users, classrooms }) {
-
+export default function Calendar({ events, users, classrooms, subjects }) {
     const { auth } = usePage().props
     const currentUserId = auth?.user?.id
     const [showModal, setShowModal] = useState(false)
@@ -327,6 +326,27 @@ export default function Calendar({ events, users, classrooms }) {
                                 </select>
                             </div>
 
+                            {/* Subject */}
+                            <div>
+                                <label className="text-sm font-medium">Subject</label>
+                                <select
+                                    value={formData.subject_id}
+                                    required
+                                    onChange={(e) =>
+                                        setFormData({ ...formData, subject_id: e.target.value })
+                                    }
+                                    className="w-full border rounded p-2 mt-1"
+                                >
+                                    <option value="">Select a Subject</option>
+
+                                    {subjects.map((subject) => (
+                                        <option key={subject.id} value={subject.id}>
+                                            {subject.subject_name} ({subject.subject_code})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
                             {/* Start Date */}
                             <div>
                                 <label className="text-sm font-medium">Start Date</label>
@@ -368,13 +388,13 @@ export default function Calendar({ events, users, classrooms }) {
                                     className="w-full border rounded p-2 mt-1"
                                 >
                                     <option value="">Select Day</option>
-                                    <option value="0">Monday</option>
-                                    <option value="1">Tuesday</option>
-                                    <option value="2">Wednesday</option>
-                                    <option value="3">Thursday</option>
-                                    <option value="4">Friday</option>
-                                    <option value="5">Saturday</option>
-                                    <option value="6">Sunday</option>
+                                    <option value="1">Monday</option>
+                                    <option value="2">Tuesday</option>
+                                    <option value="3">Wednesday</option>
+                                    <option value="4">Thursday</option>
+                                    <option value="5">Friday</option>
+                                    <option value="6">Saturday</option>
+                                    <option value="0">Sunday</option>
                                 </select>
                             </div>
 

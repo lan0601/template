@@ -86,9 +86,11 @@ Route::post('/schedule2s/events', [Schedule2Controller::class, 'get'])
     ->middleware(['auth', 'verified']);
 
 // Attendance route ----------------------------------------------
-Route::get('/attendance', [AttendanceController::class, 'index'])
-    ->middleware(['auth', 'verified'])
-    ->name('attendance');
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance');
+    Route::post('/attendance/scan', [AttendanceController::class, 'scan'])->name('attendance.scan');
+
+});
 // Classroom routes -----------------------------------------------
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/classroom', [ClassroomController::class, 'index'])->name('classroom');
