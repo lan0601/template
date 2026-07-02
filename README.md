@@ -17,3 +17,13 @@ Features:
 - Scheduler system
 - Calendar booking
 - Admin approval workflow
+
+Commands:
+composer install
+npm install
+cp .env.example .env
+php artisan key:generate
+php artisan storage:link
+
+php artisan serve
+npm run dev
