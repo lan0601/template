@@ -7,6 +7,7 @@ use App\Http\Controllers\Schedule2Controller;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\SubjectController;
+use App\Http\Controllers\UserroleController;
 use App\Http\Controllers\EnrollController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -109,6 +110,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/subject/{subject}/edit', [SubjectController::class, 'edit'])->name('subject.edit');
     Route::patch('/subject/{subject}', [SubjectController::class, 'update'])->name('subject.update');
     Route::delete('/subject/{subject}', [SubjectController::class, 'destroy'])->name('subject.destroy');
+});
+
+// User Role routes -----------------------------------------------
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/userrole', [UserroleController::class, 'index'])->name('userrole');
+    Route::get('/userrole/create', [UserroleController::class, 'create'])->name('userrole.create');
+    Route::post('/userrole', [UserroleController::class, 'store'])->name('userrole.store');
+    Route::patch('/userrole/{user}', [UserroleController::class, 'update'])->name('userrole.update');
+    Route::delete('/userrole/{user}', [UserroleController::class, 'destroy'])->name('userrole.destroy');
 });
 //Dashboard route ------------------------------------------------
 Route::get('/dashboard', function () {

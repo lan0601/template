@@ -8,7 +8,9 @@ import { Head, Link, useForm } from '@inertiajs/react';
 export default function Register() {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
+        lname: '',
         email: '',
+        roleid: '4',
         phone: '',
         password: '',
         password_confirmation: '',
@@ -28,7 +30,7 @@ export default function Register() {
 
             <form onSubmit={submit}>
                 <div>
-                    <InputLabel htmlFor="name" value="Name" />
+                    <InputLabel htmlFor="name" value="First Name" />
 
                     <TextInput
                         id="name"
@@ -44,7 +46,23 @@ export default function Register() {
                     <InputError message={errors.name} className="mt-2" />
                 </div>
 
-                <div className="mt-4">
+                <div className="mt-2">
+                    <InputLabel htmlFor="lname" value="Last Name" />
+
+                    <TextInput
+                        id="lname"
+                        name="lname"
+                        value={data.lname}
+                        className="mt-1 block w-full"
+                        autoComplete="name"
+                        onChange={(e) => setData('lname', e.target.value)}
+                        required
+                    />
+
+                    <InputError message={errors.name} className="mt-2" />
+                </div>
+
+                <div className="mt-2">
                     <InputLabel htmlFor="email" value="Email" />
 
                     <TextInput
@@ -62,6 +80,24 @@ export default function Register() {
                 </div>
 
                 <div className="mt-4">
+                    <InputLabel htmlFor="roleid" value="Select Role" />
+
+                    <select
+                        id="roleid"
+                        name="roleid"
+                        value={data.roleid}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-gray-700"
+                        onChange={(e) => setData('roleid',e.target.value)}
+                    >
+                        <option value="4">Guest</option>
+                        <option value="2">Teacher</option>
+                        <option value="3">Student</option>
+                    </select>
+
+                    <InputError message={errors.roleid} className="mt-2" />
+                </div>
+
+                <div className="mt-2">
                     <InputLabel htmlFor="phone" value="Phone" />
 
                     <TextInput
@@ -78,7 +114,7 @@ export default function Register() {
                     <InputError message={errors.phone} className="mt-2" />
                 </div>
 
-                <div className="mt-4">
+                <div className="mt-2">
                     <InputLabel htmlFor="password" value="Password" />
 
                     <TextInput
@@ -95,7 +131,7 @@ export default function Register() {
                     <InputError message={errors.password} className="mt-2" />
                 </div>
 
-                <div className="mt-4">
+                <div className="mt-2">
                     <InputLabel
                         htmlFor="password_confirmation"
                         value="Confirm Password"

@@ -20,14 +20,22 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'lname',
         'email',
         'phone',
         'password',
+        'role',
+        'remove',
     ];
 
     public function enrollments()
     {
         return $this->hasMany(Enroll::class, 'user_id');
+    }
+
+    public function role(): BelongsTo
+    {
+        return $this->belongsTo(Role::class, 'roleid', 'id');
     }
 
     /**

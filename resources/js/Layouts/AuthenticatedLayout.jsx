@@ -113,6 +113,13 @@ export default function AuthenticatedLayout({ header, children }) {
                         >
                             Subject
                         </NavLink>
+                        <NavLink
+                            href={route('userrole')}
+                            active={route().current('userrole')}
+                            className="px-4 py-2 rounded hover:bg-black hover:text-white"
+                        >
+                            Users
+                        </NavLink>
                     </nav>
                     <div className="mt-auto p-4 border-t">
                         <Dropdowntop>
