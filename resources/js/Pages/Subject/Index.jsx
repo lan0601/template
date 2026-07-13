@@ -25,8 +25,8 @@ export default function Index() {
         >
             <Head title="Subjects" />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+            <div className="pb-12">
+                <div>
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
                         <h3 className="text-lg font-medium text-gray-900">Subject list</h3>
                         <Link

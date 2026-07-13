@@ -6,7 +6,12 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, router } from '@inertiajs/react';
 import { useState } from 'react';
 
-const roleOptions = ['admin', 'teacher', 'student', 'guest'];
+const roleOptions = [
+    { value: 'Admin', label: 'Admin' },
+    { value: 'Student', label: 'Student' },
+    { value: 'Teacher', label: 'Teacher' },
+    { value: 'Guest', label: 'Guest' },
+];
 
 export default function Index({ users }) {
     const [selectedRoles, setSelectedRoles] = useState(() =>
@@ -34,9 +39,11 @@ export default function Index({ users }) {
     const handleSave = (user) => {
         setSavingId(user.id);
 
+        const nextRole = selectedRoles[user.id] || user.role;
+
         router.patch(
             route('userrole.update', user.id),
-            { role: selectedRoles[user.id] || user.role },
+            { role: nextRole },
             {
                 preserveScroll: true,
                 onFinish: () => setSavingId(null),
@@ -78,8 +85,8 @@ export default function Index({ users }) {
         >
             <Head title="User Roles" />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+            <div className="pb-12">
+                <div className="">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
                         <h3 className="text-lg font-medium text-gray-900">Users list</h3>
                         <button
@@ -140,8 +147,8 @@ export default function Index({ users }) {
                                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                     >
                                         <option value="4">Guest</option>
-                                        <option value="2">Teacher</option>
-                                        <option value="3">Student</option>
+                                        <option value="3">Teacher</option>
+                                        <option value="2">Student</option>
                                         <option value="1">Admin</option>
                                     </select>
                                     <InputError message={errors.roleid} className="mt-2" />
@@ -240,8 +247,8 @@ export default function Index({ users }) {
                                                         className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                                     >
                                                         {roleOptions.map((role) => (
-                                                            <option key={role} value={role}>
-                                                                {role}
+                                                            <option key={role.value} value={role.value}>
+                                                                {role.label}
                                                             </option>
                                                         ))}
                                                     </select>

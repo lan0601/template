@@ -39,18 +39,28 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $role = match ((string) ($validated['roleid'] ?? '')) {
-            '2' => 'teacher',
-            '3' => 'student',
-            '4' => 'guest',
+        $roleId = (int) ($validated['roleid'] ?? 4);
+        $roleName = match ($roleId) {
+            1 => 'admin',
+            2 => 'student',
+            3 => 'teacher',
+            4 => 'guest',
             default => 'guest',
         };
 
+        $role = \App\Models\Userrole::firstOrCreate([
+            'id' => $roleId,
+        ], [
+            'role_name' => $roleName,
+            'permissions' => [],
+        ]);
+
         $user = User::create([
             'name' => trim($validated['name']),
-            'lname' => trim($validated['lname'] ?? ''),
+            'lname' => trim($validated['lname'] ?? 'User'),
             'email' => $validated['email'],
-            'role' => $role,
+            'role' => $roleName,
+            'userroleid' => $role->id,
             'phone' => trim($validated['phone'] ?? ''),
             'password' => Hash::make($validated['password']),
         ]);

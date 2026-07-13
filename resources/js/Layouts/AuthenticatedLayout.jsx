@@ -7,8 +7,16 @@ import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 export default function AuthenticatedLayout({ header, children }) {
-    const user = usePage().props.auth.user;
+    const { user, permissions = {} } = usePage().props.auth;
     const [showNav, setShowNav] = useState(false);
+
+    const canAccess = (page) => {
+        if (user?.role === 'admin') {
+            return true;
+        }
+
+        return Boolean(permissions?.[page]);
+    };
 
     return (
         <div className="min-h-screen bg-gray-100">
@@ -42,13 +50,15 @@ export default function AuthenticatedLayout({ header, children }) {
                         >
                             Numbers
                         </NavLink> */}
-                        <NavLink
-                            href={route('dashboard')}
-                            active={route().current('dashboard')}
-                            className="px-4 py-2 rounded hover:bg-black hover:text-white"
-                        >
-                            Dashboard
-                        </NavLink>
+                        {canAccess('dashboard') && (
+                            <NavLink
+                                href={route('dashboard')}
+                                active={route().current('dashboard')}
+                                className="px-4 py-2 rounded hover:bg-black hover:text-white"
+                            >
+                                Dashboard
+                            </NavLink>
+                        )}
                         {/* <NavLink
                             href={route('appliance')}
                             active={route().current('appliance')}
@@ -77,49 +87,61 @@ export default function AuthenticatedLayout({ header, children }) {
                         >
                             Posts
                         </NavLink> */}
-                        <NavLink
-                            href={route('attendance')}
-                            active={route().current('attendance')}
-                            className="px-4 py-2 rounded hover:bg-black hover:text-white"
-                        >
-                            Attendance
-                        </NavLink>
-                        <NavLink
-                            href={route('enroll')}
-                            active={route().current('enroll')}
-                            className="px-4 py-2 rounded hover:bg-black hover:text-white"
-                        >
-                            Enroll
-                        </NavLink>
-                        <NavLink
-                            href={route('schedule2')}
-                            active={route().current('schedule2')}
-                            className="px-4 py-2 rounded hover:bg-black hover:text-white"
-                        >
-                            Schedule
-                        </NavLink>
-                        
-                        <NavLink
-                            href={route('classroom')}
-                            active={route().current('classroom')}
-                            className="px-4 py-2 rounded hover:bg-black hover:text-white"
-                        >
-                            Classroom
-                        </NavLink>
-                        <NavLink
-                            href={route('subject')}
-                            active={route().current('subject')}
-                            className="px-4 py-2 rounded hover:bg-black hover:text-white"
-                        >
-                            Subject
-                        </NavLink>
-                        <NavLink
-                            href={route('userrole')}
-                            active={route().current('userrole')}
-                            className="px-4 py-2 rounded hover:bg-black hover:text-white"
-                        >
-                            Users
-                        </NavLink>
+                        {canAccess('attendance') && (
+                            <NavLink
+                                href={route('attendance')}
+                                active={route().current('attendance')}
+                                className="px-4 py-2 rounded hover:bg-black hover:text-white"
+                            >
+                                Attendance
+                            </NavLink>
+                        )}
+                        {canAccess('enroll') && (
+                            <NavLink
+                                href={route('enroll')}
+                                active={route().current('enroll')}
+                                className="px-4 py-2 rounded hover:bg-black hover:text-white"
+                            >
+                                Enroll
+                            </NavLink>
+                        )}
+                        {canAccess('schedule') && (
+                            <NavLink
+                                href={route('schedule2')}
+                                active={route().current('schedule2')}
+                                className="px-4 py-2 rounded hover:bg-black hover:text-white"
+                            >
+                                Schedule
+                            </NavLink>
+                        )}
+
+                        {canAccess('classroom') && (
+                            <NavLink
+                                href={route('classroom')}
+                                active={route().current('classroom')}
+                                className="px-4 py-2 rounded hover:bg-black hover:text-white"
+                            >
+                                Classroom
+                            </NavLink>
+                        )}
+                        {canAccess('subject') && (
+                            <NavLink
+                                href={route('subject')}
+                                active={route().current('subject')}
+                                className="px-4 py-2 rounded hover:bg-black hover:text-white"
+                            >
+                                Subject
+                            </NavLink>
+                        )}
+                        {canAccess('users') && (
+                            <NavLink
+                                href={route('userrole')}
+                                active={route().current('userrole')}
+                                className="px-4 py-2 rounded hover:bg-black hover:text-white"
+                            >
+                                Users
+                            </NavLink>
+                        )}
                     </nav>
                     <div className="mt-auto p-4 border-t">
                         <Dropdowntop>
@@ -141,11 +163,11 @@ export default function AuthenticatedLayout({ header, children }) {
                     </div>
                 </aside>
                 <main className="flex-1 p-4 md:p-6 bg-gray-100 overflow-y-auto">
-                    <header className="bg-white shadow">
+                    {/* <header className="bg-white shadow">
                         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
                             {header}
                         </div>
-                    </header>
+                    </header> */}
                     {children}
                 </main>
             </div>

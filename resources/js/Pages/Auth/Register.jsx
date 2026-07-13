@@ -92,6 +92,7 @@ export default function Register() {
                         <option value="4">Guest</option>
                         <option value="2">Teacher</option>
                         <option value="3">Student</option>
+                        {/* <option value="1">Admin</option> */}
                     </select>
 
                     <InputError message={errors.roleid} className="mt-2" />

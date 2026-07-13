@@ -117,6 +117,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/userrole', [UserroleController::class, 'index'])->name('userrole');
     Route::get('/userrole/create', [UserroleController::class, 'create'])->name('userrole.create');
     Route::post('/userrole', [UserroleController::class, 'store'])->name('userrole.store');
+    Route::get('/userrole/access', [UserroleController::class, 'permissions'])->name('userrole.permissions');
+    Route::post('/userrole/access', [UserroleController::class, 'savePermissions'])->name('userrole.permissions.store');
     Route::patch('/userrole/{user}', [UserroleController::class, 'update'])->name('userrole.update');
     Route::delete('/userrole/{user}', [UserroleController::class, 'destroy'])->name('userrole.destroy');
 });

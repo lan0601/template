@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\Enroll;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -25,7 +26,9 @@ class User extends Authenticatable
         'phone',
         'password',
         'role',
+        'userroleid',
         'remove',
+        'permissions',
     ];
 
     public function enrollments()
@@ -33,9 +36,9 @@ class User extends Authenticatable
         return $this->hasMany(Enroll::class, 'user_id');
     }
 
-    public function role(): BelongsTo
+    public function userRole(): BelongsTo
     {
-        return $this->belongsTo(Role::class, 'roleid', 'id');
+        return $this->belongsTo(Userrole::class, 'userroleid', 'id');
     }
 
     /**
@@ -58,6 +61,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'permissions' => 'array',
         ];
     }
 }

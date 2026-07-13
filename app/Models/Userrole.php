@@ -6,10 +6,19 @@ use Illuminate\Database\Eloquent\Model;
 
 class Userrole extends Model
 {
+    protected $table = 'user_roles';
+
     protected $fillable = [
-        'id',
         'role_name',
-        'status',
-        'remove',
+        'permissions',
     ];
+
+    protected $casts = [
+        'permissions' => 'array',
+    ];
+
+    public function users()
+    {
+        return $this->hasMany(User::class, 'userroleid');
+    }
 }

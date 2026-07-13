@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Userrole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
@@ -16,7 +17,7 @@ class UserroleController extends Controller
     public function index()
     {
         $users = User::query()
-            ->select(['id', 'name', 'email', 'phone', 'role'])
+            ->select(['id', 'name', 'email', 'phone', 'role', 'userroleid'])
             ->where('remove', 0)
             ->where('role', '!=', 'admin')
             ->orderBy('name')
@@ -34,6 +35,7 @@ class UserroleController extends Controller
 
     public function store(Request $request)
     {
+        // dd($request->all());
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'lname' => 'nullable|string|max:255',
@@ -43,18 +45,21 @@ class UserroleController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $role = match ((string) ($validated['roleid'] ?? '')) {
-            '2' => 'teacher',
-            '3' => 'student',
-            '4' => 'guest',
-            default => 'guest',
+        $roleId = (int) ($validated['roleid'] ?? 4);
+        $roleName = match ($roleId) {
+            1 => 'Admin',
+            2 => 'Student',
+            3 => 'Teacher',
+            4 => 'Guest',
+            default => 'Guest',
         };
 
         User::create([
             'name' => trim($validated['name']),
-            'lname' => trim($validated['lname'] ?? ''),
+            'lname' => trim($validated['lname'] ?? 'User'),
             'email' => $validated['email'],
-            'role' => $role,
+            'role' => $roleName,
+            'userroleid' => $roleId,
             'phone' => trim($validated['phone'] ?? ''),
             'password' => Hash::make($validated['password']),
         ]);
@@ -71,8 +76,25 @@ class UserroleController extends Controller
             'role' => ['required', 'string', 'max:50'],
         ]);
 
+        $roleName = $validated['role'];
+        $roleId = match ($roleName) {
+            'Admin' => 1,
+            'Student' => 2,
+            'Teacher' => 3,
+            'Guest' => 4,
+            default => 4,
+        };
+
+        $role = Userrole::firstOrCreate([
+            'id' => $roleId,
+        ], [
+            'role_name' => $roleName,
+            'permissions' => [],
+        ]);
+
         $user->update([
-            'role' => $validated['role'],
+            'role' => $roleName,
+            'userroleid' => $role->id,
         ]);
 
         return back()->with('success', 'User role updated successfully.');
@@ -84,5 +106,54 @@ class UserroleController extends Controller
         $user->update(['remove' => 1]);
 
         return back()->with('success', 'User deleted successfully.');
+    }
+
+    public function permissions()
+    {
+        $roles = ['admin', 'teacher', 'student', 'guest'];
+        $pages = ['dashboard', 'attendance', 'enroll', 'schedule', 'classroom', 'subject', 'users'];
+
+        $permissionMap = [];
+        foreach ($roles as $roleName) {
+            $role = Userrole::firstOrCreate([
+                'role_name' => $roleName,
+            ], [
+                'permissions' => [],
+            ]);
+
+            $permissionMap[$roleName] = [];
+            foreach ($pages as $page) {
+                $permissionMap[$roleName][$page] = false;
+            }
+
+            foreach ($role->permissions ?? [] as $page => $allowed) {
+                $permissionMap[$roleName][$page] = (bool) $allowed;
+            }
+        }
+
+        return Inertia::render('Userrole/Permissions', [
+            'roles' => array_keys($permissionMap),
+            'pages' => $pages,
+            'permissions' => $permissionMap,
+        ]);
+    }
+
+    public function savePermissions(Request $request)
+    {
+        $validated = $request->validate([
+            'permissions' => 'required|array',
+        ]);
+
+        foreach ($validated['permissions'] as $roleName => $pages) {
+            $role = Userrole::firstOrCreate([
+                'role_name' => $roleName,
+            ], [
+                'permissions' => [],
+            ]);
+
+            $role->update(['permissions' => $pages]);
+        }
+
+        return redirect()->route('userrole.permissions')->with('success', 'Role permissions updated successfully.');
     }
 }
