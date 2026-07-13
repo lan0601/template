@@ -19,7 +19,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                 <img
                     id="background"
                     className="absolute -left-20 top-0 max-w-[877px]"
-                    src="https://laravel.com/assets/img/welcome/background.svg"
+                    // src="https://laravel.com/assets/img/welcome/background.svg"
                 />
                 <div className="relative flex min-h-screen flex-col items-center justify-center selection:bg-[#FF2D20] selection:text-white">
                     <div className="relative w-full max-w-2xl px-6 lg:max-w-7xl">
@@ -38,12 +38,12 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                                 </svg>
                             </div>
                             <nav className="-mx-3 flex flex-1 justify-end">
-                                <Link
+                                {/* <Link
                                     href="/portfolio"
                                     className="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
                                 >
                                     Portfolio
-                                </Link>
+                                </Link> */}
                                 {auth.user ? (
                                     <Link
                                         href={route('dashboard')}
@@ -70,7 +70,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                             </nav>
                         </header>
                         <footer className="py-16 text-center text-sm text-black dark:text-white/70">
-                            Laravel v{laravelVersion} (PHP v{phpVersion})
+                            {/* Laravel v{laravelVersion} (PHP v{phpVersion}) */}
                         </footer>
                     </div>
                 </div>
