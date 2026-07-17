@@ -4,10 +4,10 @@ import { Head, Link, useForm, usePage } from '@inertiajs/react';
 export default function Edit() {
     const { student, users, subjects, selectedSubjects } = usePage().props;
     const { data, setData, patch, errors, processing } = useForm({
-        user_id: student.id,
-        subjects: selectedSubjects,
+        user_id: String(student.id),
+        subjects: (selectedSubjects || []).map((subjectId) => Number(subjectId)),
     });
-
+    
     const handleUserChange = (e) => {
         setData('user_id', e.target.value);
     };
@@ -35,7 +35,7 @@ export default function Edit() {
             }
         >
             <Head title="Edit Enrollment" />
-
+            
             <div className="py-12">
                 <div className="mx-auto max-w-2xl sm:px-6 lg:px-8">
                     <div className="bg-white shadow sm:rounded-lg p-6">
@@ -73,6 +73,7 @@ export default function Edit() {
                                             key={subject.id}
                                             className="flex items-center rounded-lg border border-gray-200 bg-gray-50 p-3 hover:border-blue-500"
                                         >
+
                                             <input
                                                 type="checkbox"
                                                 name="subjects[]"
@@ -81,6 +82,7 @@ export default function Edit() {
                                                 onChange={handleSubjectChange}
                                                 className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                             />
+                                            
                                             <span className="ml-3 text-sm text-gray-700">
                                                 {subject.subject_name} {subject.subject_code ? `(${subject.subject_code})` : ''}
                                             </span>

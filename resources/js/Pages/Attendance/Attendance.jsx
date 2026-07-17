@@ -2,16 +2,12 @@ import { useState } from "react";
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import QRScanner from '@/Components/QRScanner';
 import { Head, usePage } from '@inertiajs/react';
-import { router } from '@inertiajs/react';
 import { useEffect } from 'react';
 import Swal from 'sweetalert2';
 
-
-
 export default function Dashboard() {
-    const { events = [], users = [] ,flash = {}} = usePage().props;
-
-    const [scannedValue, setScannedValue] = useState("");
+    const { attendanceRecords: initialAttendanceRecords = [], flash = {} } = usePage().props;
+    const [attendanceRecords, setAttendanceRecords] = useState(initialAttendanceRecords);
 
     // const handleScan = async (roomCode) => {
     //     const res = await router.post(route('attendance.scan'), {
@@ -58,9 +54,10 @@ export default function Dashboard() {
             title: 'Success',
             text: 'Attendance marked!',
         });
-        // success logic here
-        console.log(res.data);
-    
+
+        if (res.data.record) {
+            setAttendanceRecords((prev) => [res.data.record, ...prev]);
+        }
     };
 
     useEffect(() => {
@@ -82,17 +79,43 @@ export default function Dashboard() {
         >
             <Head title="Dashboard" />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+            <div className="pb-12">
+                <div>
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6 text-gray-900">
-                            {<QRScanner onScan={handleScan} />}
+                            <QRScanner onScan={handleScan} />
 
-                            {/* {scannedValue && (
-                                <div className="mt-4">
-                                    <strong>Scanned QR:</strong> {scannedValue}
+                            <div className="mt-8">
+                                <h3 className="text-lg font-semibold text-gray-800">Recent Attendance</h3>
+                                <div className="mt-4 overflow-x-auto">
+                                    {attendanceRecords.length > 0 ? (
+                                        <table className="min-w-full divide-y divide-gray-200">
+                                            <thead className="bg-gray-50">
+                                                <tr>
+                                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Date</th>
+                                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Time</th>
+                                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Classroom</th>
+                                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Subject</th>
+                                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-200 bg-white">
+                                                {attendanceRecords.map((record) => (
+                                                    <tr key={record.id}>
+                                                        <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">{record.date}</td>
+                                                        <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">{record.time}</td>
+                                                        <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">{record.classroom}</td>
+                                                        <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">{record.subject}</td>
+                                                        <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">{record.status}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    ) : (
+                                        <p className="text-sm text-gray-500">No attendance records yet.</p>
+                                    )}
                                 </div>
-                            )} */}
+                            </div>
                         </div>
                     </div>
                 </div>

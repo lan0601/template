@@ -8,8 +8,10 @@ use App\Models\Schedule2;
 use App\Models\Classroom;
 use App\Models\Enroll;
 use App\Models\Attendance;
+use App\Models\Subject;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class AttendanceController extends Controller
 {
@@ -46,9 +48,25 @@ class AttendanceController extends Controller
         //     });
         // $users = User::all();
 
+        $attendanceRecords = Attendance::query()
+            ->where('user_id', $user->id)
+            ->with(['subject', 'classroom'])
+            ->orderByDesc('attendance_date')
+            ->orderByDesc('time_in')
+            ->get()
+            ->map(function ($record) {
+                return [
+                    'id' => $record->id,
+                    'date' => $record->attendance_date,
+                    'time' => Carbon::parse($record->time_in)->format('h:i A'),
+                    'classroom' => $record->classroom?->room_number ?? 'N/A',
+                    'subject' => $record->subject?->subject_name ?? 'N/A',
+                    'status' => $record->status,
+                ];
+            });
+
         return Inertia::render('Attendance/Attendance', [
-            // 'events' => $events,
-            // 'users' => $users
+            'attendanceRecords' => $attendanceRecords,
         ]);
     }
 
@@ -84,11 +102,12 @@ class AttendanceController extends Controller
         $user = Auth::user();
 
         $enroll = Enroll::where('user_id', $user->id)
-            ->where('subject_id', $schedule->subject_id)->get();
+            ->where('subject_id', $schedule->subject_id)
+            ->exists();
 
-        if(!$enroll){
+        if (!$enroll) {
             return response()->json([
-                'status' =>'error',
+                'status' => 'error',
                 'message' => 'Not enrolled for this subject',
             ]);
         }
@@ -107,7 +126,7 @@ class AttendanceController extends Controller
             ]);
         }
 
-        Attendance::create([
+        $attendance = Attendance::create([
             'user_id' => $user->id,
             'subject_id' => $schedule->subject_id,
             'classroom_id' => $classroomId,
@@ -118,7 +137,15 @@ class AttendanceController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Attendance recorded successfully!'
+            'message' => 'Attendance recorded successfully!',
+            'record' => [
+                'id' => $attendance->id,
+                'date' => $attendance->attendance_date,
+                'time' => $attendance->time_in,
+                'classroom' => $attendance->classroom?->room_number ?? 'N/A',
+                'subject' => $attendance->subject?->subject_name ?? 'N/A',
+                'status' => $attendance->status,
+            ],
         ]);
     }
 

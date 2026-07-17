@@ -7,13 +7,14 @@ export default function QRScanner({ onScan }) {
             "reader",
             {
                 fps: 10,
-                qrbox: 250,
+                qrbox: { width: 320, height: 320 }
             },
             false
         );
-
+        
         scanner.render(
             (decodedText) => {
+                scanner.clear();
                 console.log("QR Result:", decodedText);
 
                 // Send the scanned value to the parent

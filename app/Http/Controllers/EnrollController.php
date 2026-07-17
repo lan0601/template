@@ -81,7 +81,9 @@ class EnrollController extends Controller
      */
     public function edit(User $student)
     {
-        $users = User::select(['id', 'name', 'email'])->get();
+        $users = User::select(['id', 'name', 'email'])
+        ->where('role', 'student')
+        ->get();
         $subjects = Subject::select(['id', 'subject_name', 'subject_code'])->get();
 
         $student->load('enrollments.subject');
@@ -106,10 +108,10 @@ class EnrollController extends Controller
             'subjects.*' => ['required', 'exists:subjects,id'],
         ]);
 
-        $userId = $request->input('user_id');
-        $subjectIds = $request->input('subjects', []);
+        $userId = (int) $request->input('user_id');
+        $subjectIds = array_map('intval', (array) $request->input('subjects', []));
 
-        if ($userId === $student->id) {
+        if ($userId === (int) $student->id) {
             Enroll::where('user_id', $student->id)
                 ->whereNotIn('subject_id', $subjectIds)
                 ->delete();
@@ -122,7 +124,7 @@ class EnrollController extends Controller
             }
         } else {
             Enroll::where('user_id', $student->id)
-                ->whereIn('subject_id', $subjectIds)
+                ->whereNotIn('subject_id', $subjectIds)
                 ->delete();
 
             foreach ($subjectIds as $subjectId) {

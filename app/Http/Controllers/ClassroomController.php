@@ -47,7 +47,7 @@ class ClassroomController extends Controller
         $classroom = Classroom::create($validated);
         // Generate QR code
         $qrFileName = 'classroom_' . $validated['room_number'] . '.svg';
-        $qrCode = QrCode::format('svg')->size(300)->generate('CLASSROOM-' . $validated['room_number']);
+        $qrCode = QrCode::format('svg')->size(400)->margin(4)->generate('CLASSROOM-' . $validated['room_number']);
         // Store QR code
         Storage::disk('public')->put(
             'qrcodes/' . $qrFileName,

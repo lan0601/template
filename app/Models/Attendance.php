@@ -14,4 +14,14 @@ class Attendance extends Model
         'time_in',
         'status',
     ];
+
+    public function subject()
+    {
+        return $this->belongsTo(Subject::class);
+    }
+
+    public function classroom()
+    {
+        return $this->belongsTo(Classroom::class);
+    }
 }
