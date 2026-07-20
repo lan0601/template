@@ -7,6 +7,7 @@ use App\Http\Controllers\Schedule2Controller;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\SubjectController;
+use App\Http\Controllers\SectionController;
 use App\Http\Controllers\UserroleController;
 use App\Http\Controllers\EnrollController;
 use Illuminate\Foundation\Application;
@@ -110,6 +111,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/subject/{subject}/edit', [SubjectController::class, 'edit'])->name('subject.edit');
     Route::patch('/subject/{subject}', [SubjectController::class, 'update'])->name('subject.update');
     Route::delete('/subject/{subject}', [SubjectController::class, 'destroy'])->name('subject.destroy');
+});
+
+// Section routes -----------------------------------------------
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/section', [SectionController::class, 'index'])->name('section');
+    Route::get('/section/create', [SectionController::class, 'create'])->name('section.create');
+    Route::post('/section', [SectionController::class, 'store'])->name('section.store');
+    Route::get('/section/{section}/edit', [SectionController::class, 'edit'])->name('section.edit');
+    Route::patch('/section/{section}', [SectionController::class, 'update'])->name('section.update');
+    Route::delete('/section/{section}', [SectionController::class, 'destroy'])->name('section.destroy');
 });
 
 // User Role routes -----------------------------------------------

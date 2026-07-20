@@ -38,7 +38,9 @@ class EnrollController extends Controller
      */
     public function create()
     {
-        $users = User::select(['id', 'name', 'email'])->get();
+        $users = User::select(['id', 'name', 'email'])
+        ->where('role', 'Student')
+        ->get();
         $subjects = Subject::select(['id', 'subject_name', 'subject_code'])->get();
 
         return Inertia::render('Enroll/Create', [
