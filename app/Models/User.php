@@ -33,7 +33,7 @@ class User extends Authenticatable
 
     public function enrollments()
     {
-        return $this->hasMany(Enroll::class, 'user_id');
+        return $this->hasMany(Enrollment::class, 'user_id');
     }
 
     public function userRole(): BelongsTo

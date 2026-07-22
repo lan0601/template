@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Enroll;
+use App\Models\Enrollment;
 use App\Models\Subject;
 use App\Models\User;
 use Inertia\Inertia;
@@ -15,7 +15,7 @@ class EnrollController extends Controller
      */
     public function index()
     {
-        $enrolls = Enroll::with(['student', 'subject'])->get();
+        $enrolls = Enrollment::with(['student', 'subject'])->get();
 
         $users = User::where('role', 'student')
         ->with('enrollments.subject')
@@ -61,7 +61,7 @@ class EnrollController extends Controller
         ]);
 
         foreach ($request->input('subjects', []) as $subjectId) {
-            Enroll::firstOrCreate([
+            Enrollment::firstOrCreate([
                 'user_id' => $request->input('user_id'),
                 'subject_id' => $subjectId,
             ]);
@@ -73,7 +73,7 @@ class EnrollController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Enroll $enroll)
+    public function show(Enrollment $enroll)
     {
         //
     }
@@ -114,23 +114,23 @@ class EnrollController extends Controller
         $subjectIds = array_map('intval', (array) $request->input('subjects', []));
 
         if ($userId === (int) $student->id) {
-            Enroll::where('user_id', $student->id)
+            Enrollment::where('user_id', $student->id)
                 ->whereNotIn('subject_id', $subjectIds)
                 ->delete();
 
             foreach ($subjectIds as $subjectId) {
-                Enroll::firstOrCreate([
+                Enrollment::firstOrCreate([
                     'user_id' => $student->id,
                     'subject_id' => $subjectId,
                 ]);
             }
         } else {
-            Enroll::where('user_id', $student->id)
+            Enrollment::where('user_id', $student->id)
                 ->whereNotIn('subject_id', $subjectIds)
                 ->delete();
 
             foreach ($subjectIds as $subjectId) {
-                Enroll::firstOrCreate([
+                Enrollment::firstOrCreate([
                     'user_id' => $userId,
                     'subject_id' => $subjectId,
                 ]);
@@ -143,7 +143,7 @@ class EnrollController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Enroll $enroll)
+    public function destroy(Enrollment $enroll)
     {
         //
     }

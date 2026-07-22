@@ -90,8 +90,8 @@ export default function Register() {
                         onChange={(e) => setData('roleid',e.target.value)}
                     >
                         <option value="4">Guest</option>
-                        <option value="2">Teacher</option>
-                        <option value="3">Student</option>
+                        <option value="3">Teacher</option>
+                        <option value="2">Student</option>
                         {/* <option value="1">Admin</option> */}
                     </select>
 

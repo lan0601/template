@@ -18,11 +18,14 @@ class AttendanceController extends Controller
     public function index()
     {
         $user = Auth::user();
+        $userRole = auth()->user()->role;
         if (!$user) {
             return response()->json([
                 'message' => 'Unauthorized'
             ], 401);
         }
+
+        // dd($userRole);
         
         // $events = Schedule::with('approver')
         //     ->where(function ($query) use ($userId) {
@@ -47,8 +50,8 @@ class AttendanceController extends Controller
         //         ];
         //     });
         // $users = User::all();
-
-        $attendanceRecords = Attendance::query()
+        if($userRole === 'student'){
+            $attendanceRecords = Attendance::query()
             ->where('user_id', $user->id)
             ->with(['subject', 'classroom'])
             ->orderByDesc('attendance_date')
@@ -65,9 +68,32 @@ class AttendanceController extends Controller
                 ];
             });
 
-        return Inertia::render('Attendance/Attendance', [
-            'attendanceRecords' => $attendanceRecords,
-        ]);
+            return Inertia::render('Attendance/Attendance', [
+                'attendanceRecords' => $attendanceRecords,
+            ]);
+        }else{
+            $attendanceRecords = Attendance::query()
+            ->with(['subject', 'classroom', 'user'])
+            ->orderByDesc('attendance_date')
+            ->orderByDesc('time_in')
+            ->get()
+            ->map(function ($record) {
+                return [
+                    'id' => $record->id,
+                    'date' => $record->attendance_date,
+                    'time' => Carbon::parse($record->time_in)->format('h:i A'),
+                    'classroom' => $record->classroom?->room_number ?? 'N/A',
+                    'subject' => $record->subject?->subject_name ?? 'N/A',
+                    'status' => $record->status,
+                    'student_name' => $record->user?->name ?? 'N/A',
+                ];
+            });
+
+            return Inertia::render('Attendance/Attendance', [
+                'attendanceRecords' => $attendanceRecords,
+            ]);
+        }
+        
     }
 
     public function scan(Request $request)

@@ -3,16 +3,15 @@ import Dropdown from '@/Components/Dropdown';
 import Dropdowntop from '@/Components/Dropdowntop';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
-import { Link, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { Link, usePage, useRemember } from '@inertiajs/react';
 
 export default function AuthenticatedLayout({ header, children }) {
     const { user, permissions = {} } = usePage().props.auth;
-    const [showNav, setShowNav] = useState(false);
-    const [openDashboard, setOpenDashboard] = useState(true);
-    const [openMaster, setOpenMaster] = useState(true);
-    const [openAcademic, setOpenAcademic] = useState(true);
-    const [openTransactions, setOpenTransactions] = useState(true);
+    const [showNav, setShowNav] = useRemember(true,'showNav');
+    const [openDashboard, setOpenDashboard] = useRemember(false,'openDashboard');
+    const [openMaster, setOpenMaster] = useRemember(false,'openMaster');
+    const [openAcademic, setOpenAcademic] = useRemember(false,'openAcademic');
+    const [openTransactions, setOpenTransactions] = useRemember(false,'openTransactions');
 
     const canAccess = (page) => {
         if (user?.role === 'admin') {
