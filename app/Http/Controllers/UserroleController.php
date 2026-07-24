@@ -111,7 +111,7 @@ class UserroleController extends Controller
     public function permissions()
     {
         $roles = ['admin', 'teacher', 'student', 'guest'];
-        $pages = ['dashboard', 'attendance', 'enroll', 'schedule', 'classroom', 'subject', 'users', 'section'];
+        $pages = ['dashboard', 'attendance', 'enroll', 'schedule', 'classroom', 'subject', 'users', 'section', 'subject_offering'];
 
         $permissionMap = [];
         foreach ($roles as $roleName) {

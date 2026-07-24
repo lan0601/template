@@ -10,6 +10,7 @@ use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\UserroleController;
 use App\Http\Controllers\EnrollController;
+use App\Http\Controllers\SubjectOfferingController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -133,6 +134,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/userrole/{user}', [UserroleController::class, 'update'])->name('userrole.update');
     Route::delete('/userrole/{user}', [UserroleController::class, 'destroy'])->name('userrole.destroy');
 });
+
+// Subject Offering routes ---------------------------------------
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/subjectoffering', [SubjectOfferingController::class, 'index'])->name('subjectoffering');
+    Route::get('/subjectoffering/create', [SubjectOfferingController::class, 'create'])->name('subjectoffering.create');
+    Route::post('/subjectoffering', [SubjectOfferingController::class, 'store'])->name('subjectoffering.store');
+    Route::get('/subjectoffering/{subjectoffering}/edit', [SubjectOfferingController::class, 'edit'])->name('subjectoffering.edit');
+    Route::patch('/subjectoffering/{subjectofferings}', [SubjectOfferingController::class, 'update'])->name('subjectoffering.update');
+    // Route::delete('/subjectoffering/{subjectOffering}', [SubjectOfferingController::class, 'destroy'])->name('subjectoffering.destroy');
+});
+
 //Dashboard route ------------------------------------------------
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');

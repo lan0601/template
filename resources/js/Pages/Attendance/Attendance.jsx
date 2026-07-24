@@ -12,7 +12,6 @@ export default function Dashboard() {
         teacherAttendance = [],
         flash = {},
     } = usePage().props;
-    console.log(auth);
 
     const user = auth.user;
 

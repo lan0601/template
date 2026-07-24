@@ -4,17 +4,33 @@ import Dropdowntop from '@/Components/Dropdowntop';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
 import { Link, usePage, useRemember } from '@inertiajs/react';
+import { useEffect } from 'react';
 
 export default function AuthenticatedLayout({ header, children }) {
     const { user, permissions = {} } = usePage().props.auth;
-    const [showNav, setShowNav] = useRemember(true,'showNav');
-    const [openDashboard, setOpenDashboard] = useRemember(false,'openDashboard');
-    const [openMaster, setOpenMaster] = useRemember(false,'openMaster');
-    const [openAcademic, setOpenAcademic] = useRemember(false,'openAcademic');
-    const [openTransactions, setOpenTransactions] = useRemember(false,'openTransactions');
+    const currentRoute = route().current();
+
+    const isDashboardActive = route().current('dashboard') || route().current('attendance');
+    const isMasterActive = route().current('userrole*') || route().current('subject*') || route().current('section*') || route().current('classroom*');
+    const isAcademicActive = route().current('subjectoffering*');
+    const isTransactionsActive = route().current('enroll*');
+
+    const [showNav, setShowNav] = useRemember(true, 'showNav');
+    const [openDashboard, setOpenDashboard] = useRemember(isDashboardActive, 'openDashboard');
+    const [openMaster, setOpenMaster] = useRemember(isMasterActive, 'openMaster');
+    const [openAcademic, setOpenAcademic] = useRemember(isAcademicActive, 'openAcademic');
+    const [openTransactions, setOpenTransactions] = useRemember(isTransactionsActive, 'openTransactions');
+
+    useEffect(() => {
+        if (isDashboardActive) setOpenDashboard(true);
+        if (isMasterActive) setOpenMaster(true);
+        if (isAcademicActive) setOpenAcademic(true);
+        if (isTransactionsActive) setOpenTransactions(true);
+    }, [currentRoute]);
+
 
     const canAccess = (page) => {
-        if (user?.role === 'admin') {
+        if (user?.role?.toLowerCase() === 'admin') {
             return true;
         }
 
@@ -117,9 +133,14 @@ export default function AuthenticatedLayout({ header, children }) {
                                 <span>Academic Setup</span>
                                 <span className="text-xs">{openAcademic ? '▾' : '▸'}</span>
                             </button>
+
                             {openAcademic && (
-                                <div className="mt-1 ml-2">
-                                    <div className="px-4 py-2 text-sm text-gray-700 rounded">Subject Offerings</div>
+                                <div className="mt-1 ml-2 flex flex-col space-y-1">
+                                    {canAccess('subjectoffering') && (
+                                        <NavLink href={route('subjectoffering')} active={route().current('subjectoffering*')} className="px-4 py-2 rounded hover:bg-black hover:text-white">
+                                            Subject Offerings
+                                        </NavLink>
+                                    )}
                                 </div>
                             )}
                         </div>
