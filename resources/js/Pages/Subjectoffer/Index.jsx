@@ -4,7 +4,7 @@ import { Head, Link, useForm, usePage } from '@inertiajs/react';
 export default function Index() {
     const { subjectofferings } = usePage().props;
     const { delete: destroy, processing } = useForm();
-    // console.log(subjectofferings);
+    
     const handleDelete = (offering) => {
         const subjectTitle = offering.subject?.subject_name || 'Subject Offering';
         if (!confirm(`Delete subject offering for ${subjectTitle} (${offering.section})?`)) {

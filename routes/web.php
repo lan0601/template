@@ -141,7 +141,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/subjectoffering/create', [SubjectOfferingController::class, 'create'])->name('subjectoffering.create');
     Route::post('/subjectoffering', [SubjectOfferingController::class, 'store'])->name('subjectoffering.store');
     Route::get('/subjectoffering/{subjectoffering}/edit', [SubjectOfferingController::class, 'edit'])->name('subjectoffering.edit');
-    Route::patch('/subjectoffering/{subjectofferings}', [SubjectOfferingController::class, 'update'])->name('subjectoffering.update');
+    Route::patch('/subjectoffering/{subjectoffering}', [SubjectOfferingController::class, 'update'])->name('subjectoffering.update');
     // Route::delete('/subjectoffering/{subjectOffering}', [SubjectOfferingController::class, 'destroy'])->name('subjectoffering.destroy');
 });
 

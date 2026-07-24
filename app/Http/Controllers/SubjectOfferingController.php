@@ -9,6 +9,7 @@ use App\Models\Classroom;
 use App\Models\Section;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Carbon\Carbon;
 
 class SubjectOfferingController extends Controller
 {
@@ -17,22 +18,26 @@ class SubjectOfferingController extends Controller
      */
     public function index()
     {
-        // $query = SELECT s.subject_name,so.section,CONCAT(u.name, ' ', u.lname) AS teacher,c.room_number,CONCAT(so.day,' ',so.start_time,' - ',so.end_time)as Schedule,so.term,so.school_year,so.capacity,so.status FROM subject_offerings so
-        // INNER JOIN Users u 
-        // ON u.id = so.teacher_id
+        $subjectOfferings = SubjectOffering::with(['subject', 'teacher', 'classroom'])
+            ->latest()
+            ->get()
+            ->map(function ($offering) {
+                $offering->start_time = Carbon::parse($offering->start_time)->format('H:i');
+                $offering->end_time = Carbon::parse($offering->end_time)->format('H:i');
 
-        // INNER JOIN subjects s
-        // ON s.id = so.subject_id
+                return $offering;
+            });
 
-        // INNER JOIN classrooms c
-        // ON c.id = so.classroom_id
-
-
-        $subjectOfferings = SubjectOffering::with(['subject', 'teacher', 'classroom'])->latest()->get();
-        // dd($subjectOfferings);
         return Inertia::render('Subjectoffer/Index', [
             'subjectofferings' => $subjectOfferings,
         ]);
+
+
+        // $subjectOfferings = SubjectOffering::with(['subject', 'teacher', 'classroom'])->latest()->get();
+        // // dd($subjectOfferings);
+        // return Inertia::render('Subjectoffer/Index', [
+        //     'subjectofferings' => $subjectOfferings,
+        // ]);
     }
 
     /**
@@ -98,7 +103,7 @@ class SubjectOfferingController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, SubjectOffering $subjectOffering)
+    public function update(Request $request, SubjectOffering $subjectoffering)
     {
         $validated = $request->validate([
             'subject_id' => 'required|exists:subjects,id',
@@ -115,9 +120,9 @@ class SubjectOfferingController extends Controller
             'status' => 'required|integer',
         ]);
 
-        $subjectOffering->update($validated);
+        $subjectoffering->update($validated);
 
-        return redirect(route('subject_offering'))->with('message', 'Subject Offering updated successfully.');
+        return redirect(route('subjectoffering'))->with('message', 'Subject Offering updated successfully.');
     }
 
     /**

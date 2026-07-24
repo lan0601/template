@@ -2,7 +2,6 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 
 export default function Edit({ subjectOffering }) {
-        console.log(subjectOffering);
 
     const { subjects = [], teachers = [], classrooms = [] } = usePage().props;
     const { data, setData, patch, errors, processing } = useForm({
