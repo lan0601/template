@@ -54,11 +54,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/enroll', [EnrollController::class, 'index'])->name('enroll');
     Route::get('/enroll/create', [EnrollController::class, 'create'])->name('enroll.create');
     Route::post('/enroll', [EnrollController::class, 'store'])->name('enroll.store');
-    // Route::post('/subject', [SubjectController::class, 'store'])->name('subject.store');
-    Route::get('/enroll/{student}/edit', [EnrollController::class, 'edit'])->name('enroll.edit');
-    Route::patch('/enroll/{student}', [EnrollController::class, 'update'])->name('enroll.update');
-    // Route::patch('/subject/{subject}', [SubjectController::class, 'update'])->name('subject.update');
-    // Route::delete('/subject/{subject}', [SubjectController::class, 'destroy'])->name('subject.destroy');
+    Route::get('/enroll/{enrollment}/edit', [EnrollController::class, 'edit'])->name('enroll.edit');
+    Route::patch('/enroll/{enrollment}', [EnrollController::class, 'update'])->name('enroll.update');
+    Route::delete('/enroll/{enrollment}', [EnrollController::class, 'destroy'])->name('enroll.destroy');
 });
 // Schedule routes ----------------------------------------------
 Route::get('/schedule', [ScheduleController::class, 'index'])

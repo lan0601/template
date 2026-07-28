@@ -8,19 +8,18 @@ class Enrollment extends Model
 {
     protected $fillable = [
         'user_id',
-        'subject_id',
+        'school_year',
         'section_id',
-        'shool_year',
-        'semester',
+        'status',
     ];
-    
+
     public function student()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function subject()
+    public function section()
     {
-        return $this->belongsTo(Subject::class);
+        return $this->belongsTo(Section::class);
     }
 }

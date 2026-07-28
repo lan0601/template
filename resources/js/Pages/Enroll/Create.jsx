@@ -1,25 +1,28 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import SearchableSelect from '@/Components/SearchableSelect';
 
 export default function Create() {
-    const { users, subjects } = usePage().props;
+    const { users, sections } = usePage().props;
+
     const { data, setData, post, errors, processing } = useForm({
-        user_id: '',
-        subjects: [],
+        user_id:     '',
+        section_id:  '',
+        school_year: '',
+        status:      'active',
     });
 
-    const handleUserChange = (e) => {
-        setData('user_id', e.target.value);
-    };
+    // Map users to { value, label } options
+    const studentOptions = users.map((u) => ({
+        value: u.id,
+        label: `${u.name}${u.lname ? ' ' + u.lname : ''}${u.email ? ' (' + u.email + ')' : ''}`,
+    }));
 
-    const handleSubjectChange = (e) => {
-        const subjectId = parseInt(e.target.value, 10);
-        if (e.target.checked) {
-            setData('subjects', [...data.subjects, subjectId]);
-        } else {
-            setData('subjects', data.subjects.filter((id) => id !== subjectId));
-        }
-    };
+    // Map sections to { value, label } options
+    const sectionOptions = sections.map((s) => ({
+        value: s.id,
+        label: `${s.section_name} — ${s.year_level} | ${s.school_year} ${s.semester}`,
+    }));
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -40,58 +43,80 @@ export default function Create() {
                 <div className="mx-auto max-w-2xl sm:px-6 lg:px-8">
                     <div className="bg-white shadow sm:rounded-lg p-6">
                         <form onSubmit={handleSubmit} className="space-y-6">
+
+                            {/* Student */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Student
+                                <label htmlFor="user_id" className="block text-sm font-medium text-gray-700">
+                                    Student <span className="text-red-500">*</span>
+                                </label>
+                                <SearchableSelect
+                                    id="user_id"
+                                    value={data.user_id}
+                                    onChange={(val) => setData('user_id', val)}
+                                    options={studentOptions}
+                                    placeholder="Search student by name or email…"
+                                    error={errors.user_id}
+                                />
+                            </div>
+
+                            {/* Section */}
+                            <div>
+                                <label htmlFor="section_id" className="block text-sm font-medium text-gray-700">
+                                    Section <span className="text-red-500">*</span>
+                                </label>
+                                <SearchableSelect
+                                    id="section_id"
+                                    value={data.section_id}
+                                    onChange={(val) => setData('section_id', val)}
+                                    options={sectionOptions}
+                                    placeholder="Search section by name…"
+                                    error={errors.section_id}
+                                />
+                            </div>
+
+                            {/* School Year */}
+                            <div>
+                                <label htmlFor="school_year" className="block text-sm font-medium text-gray-700">
+                                    School Year <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    id="school_year"
+                                    type="text"
+                                    name="school_year"
+                                    value={data.school_year}
+                                    onChange={(e) => setData('school_year', e.target.value)}
+                                    placeholder="e.g. 2025-2026"
+                                    required
+                                    className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 text-sm text-gray-700"
+                                />
+                                {errors.school_year && (
+                                    <p className="mt-1 text-sm text-red-600">{errors.school_year}</p>
+                                )}
+                            </div>
+
+                            {/* Status */}
+                            <div>
+                                <label htmlFor="status" className="block text-sm font-medium text-gray-700">
+                                    Status <span className="text-red-500">*</span>
                                 </label>
                                 <select
-                                    name="user_id"
-                                    value={data.user_id}
-                                    onChange={handleUserChange}
+                                    id="status"
+                                    name="status"
+                                    value={data.status}
+                                    onChange={(e) => setData('status', e.target.value)}
                                     required
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
+                                    className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 text-sm text-gray-700"
                                 >
-                                    <option value="">Select a student</option>
-                                    {users.map((user) => (
-                                        <option key={user.id} value={user.id}>
-                                            {user.name} {user.email ? `(${user.email})` : ''}
-                                        </option>
-                                    ))}
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                    <option value="dropped">Dropped</option>
                                 </select>
-                                {errors.user_id && (
-                                    <p className="mt-1 text-sm text-red-600">{errors.user_id}</p>
+                                {errors.status && (
+                                    <p className="mt-1 text-sm text-red-600">{errors.status}</p>
                                 )}
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Subjects
-                                </label>
-                                <div className="mt-2 grid gap-3 sm:grid-cols-2">
-                                    {subjects.map((subject) => (
-                                        <label
-                                            key={subject.id}
-                                            className="flex items-center rounded-lg border border-gray-200 bg-gray-50 p-3 hover:border-blue-500"
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                name="subjects[]"
-                                                value={subject.id}
-                                                checked={data.subjects.includes(subject.id)}
-                                                onChange={handleSubjectChange}
-                                                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                            />
-                                            <span className="ml-3 text-sm text-gray-700">
-                                                {subject.subject_name} {subject.subject_code ? `(${subject.subject_code})` : ''}
-                                            </span>
-                                        </label>
-                                    ))}
-                                </div>
-                                {errors.subjects && (
-                                    <p className="mt-1 text-sm text-red-600">{errors.subjects}</p>
-                                )}
-                            </div>
-
+                            {/* Actions */}
                             <div className="flex justify-end space-x-3">
                                 <Link
                                     href={route('enroll')}
@@ -104,9 +129,10 @@ export default function Create() {
                                     disabled={processing}
                                     className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
                                 >
-                                    {processing ? 'Submitting...' : 'Submit Enrollment'}
+                                    {processing ? 'Submitting...' : 'Create Enrollment'}
                                 </button>
                             </div>
+
                         </form>
                     </div>
                 </div>

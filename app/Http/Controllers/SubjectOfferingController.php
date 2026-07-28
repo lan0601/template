@@ -47,7 +47,7 @@ class SubjectOfferingController extends Controller
     {
         return Inertia::render('Subjectoffer/Create', [
             'subjects' => Subject::all(),
-            'teachers' => User::all(),
+            'teachers' => User::where('role', 'teacher')->where('userroleid',3)->get(),
             'classrooms' => Classroom::all(),
             'sections' => Section::all(),
         ]);

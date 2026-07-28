@@ -1,43 +1,50 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 
 export default function Index() {
-    const { students } = usePage().props;
-    console.log(students);
+    const { enrollments, flash } = usePage().props;
     const { delete: destroy, processing } = useForm();
-    // students.map((students) => {
-    //     console.log(students);
-    // });
-    // const handleDelete = (enroll) => {
-    //     console.log(enroll);
-    //     if (!confirm(`Delete enroll ${enroll.user_id}?`)) {
-    //         return;
-    //     }
 
-    //     destroy(route('enroll.destroy', enroll.id), {
-    //         preserveScroll: true,
-    //     });
-    // };
+    const statusBadge = (status) => {
+        const styles = {
+            active:   'bg-green-100 text-green-800',
+            inactive: 'bg-yellow-100 text-yellow-800',
+            dropped:  'bg-red-100 text-red-800',
+        };
+        return styles[status] ?? 'bg-gray-100 text-gray-700';
+    };
+
+    const handleDelete = (enrollment) => {
+        if (!confirm(`Delete enrollment for ${enrollment.student?.name ?? 'this student'}?`)) return;
+        router.delete(route('enroll.destroy', enrollment.id), { preserveScroll: true });
+    };
 
     return (
         <AuthenticatedLayout
             header={
                 <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    Enroll Management
+                    Enrollment Management
                 </h2>
             }
         >
-            <Head title="Enrolls" />
+            <Head title="Enrollments" />
 
             <div className="pb-12">
                 <div>
+                    {/* Flash message */}
+                    {flash?.success && (
+                        <div className="mb-4 rounded-md bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800">
+                            {flash.success}
+                        </div>
+                    )}
+
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
-                        <h3 className="text-lg font-medium text-gray-900">Enroll list</h3>
+                        <h3 className="text-lg font-medium text-gray-900">Enrollment List</h3>
                         <Link
                             href={route('enroll.create')}
                             className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white text-center rounded hover:bg-blue-700"
                         >
-                            New Enroll
+                            + New Enrollment
                         </Link>
                     </div>
 
@@ -46,72 +53,58 @@ export default function Index() {
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                            Student
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                            Subjects
-                                        </th>
-                                        {/* <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                            Status
-                                        </th> */}
-                                        <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                                            Actions
-                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">#</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Student</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Section</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">School Year</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
+                                        <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200 bg-white">
-                                    {students.length === 0 ? (
+                                    {enrollments.length === 0 ? (
                                         <tr>
-                                            <td colSpan="7" className="px-6 py-8 text-center text-sm text-gray-500">
-                                                No students found.
+                                            <td colSpan="6" className="px-6 py-8 text-center text-sm text-gray-500">
+                                                No enrollments found.
                                             </td>
                                         </tr>
                                     ) : (
-                                        students.map((students) => (
-                                            console.log(students),
-                                            <tr key={students.id}>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    {students.name}
+                                        enrollments.map((enrollment, index) => (
+                                            <tr key={enrollment.id} className="hover:bg-gray-50">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {index + 1}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    
-                                                    {students.enrolled_subjects.map((subject) => (
-                                                        <span key={subject.id} className="inline-block bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded-full mr-2">
-                                                            {subject.subject_code} - {subject.subject_name}
-                                                        </span>
-                                                    ))}
+                                                    {enrollment.student
+                                                        ? `${enrollment.student.name}${enrollment.student.lname ? ' ' + enrollment.student.lname : ''}`
+                                                        : '—'}
                                                 </td>
-                                                {/* <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                                    
-                                                    <span
-                                                        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                                                            students.status === 'available'
-                                                                ? 'bg-green-100 text-green-800'
-                                                                : students.status === 'occupied'
-                                                                    ? 'bg-yellow-100 text-yellow-800'
-                                                                    : 'bg-red-100 text-red-800'
-                                                        }`}
-                                                    >
-                                                        {students.status}
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    {enrollment.section?.section_name ?? '—'}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    {enrollment.school_year}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusBadge(enrollment.status)}`}>
+                                                        {enrollment.status}
                                                     </span>
-                                                </td> */}
-                                                
+                                                </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                                                     <Link
-                                                        href={route('enroll.edit', students.id)}
+                                                        href={route('enroll.edit', enrollment.id)}
                                                         className="inline-flex items-center px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
                                                     >
                                                         Edit
                                                     </Link>
-                                                    {/* <button
+                                                    <button
                                                         type="button"
-                                                        onClick={() => handleDelete(classroom)}
+                                                        onClick={() => handleDelete(enrollment)}
                                                         disabled={processing}
                                                         className="inline-flex items-center px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
                                                     >
                                                         Delete
-                                                    </button> */}
+                                                    </button>
                                                 </td>
                                             </tr>
                                         ))

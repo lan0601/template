@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Enrollment;
-use App\Models\Subject;
+use App\Models\Section;
 use App\Models\User;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
@@ -15,21 +15,10 @@ class EnrollController extends Controller
      */
     public function index()
     {
-        $enrolls = Enrollment::with(['student', 'subject'])->get();
-
-        $users = User::where('role', 'student')
-        ->with('enrollments.subject')
-        ->get();
-        // return $users;
-        foreach ($users as $user) {
-            $user->enrolled_subjects = $user->enrollments->map(function ($enrollment) {
-                return $enrollment->subject;
-            });
-        }
+        $enrollments = Enrollment::with(['student', 'section'])->latest()->get();
 
         return Inertia::render('Enroll/Index', [
-            'enrolls' => $enrolls,
-            'students' => $users,
+            'enrollments' => $enrollments,
         ]);
     }
 
@@ -38,14 +27,18 @@ class EnrollController extends Controller
      */
     public function create()
     {
-        $users = User::select(['id', 'name', 'email'])
-        ->where('role', 'Student')
-        ->get();
-        $subjects = Subject::select(['id', 'subject_name', 'subject_code'])->get();
+        $users = User::select(['id', 'name', 'lname', 'email'])
+            ->where('role', 'Student')
+            ->get();
+
+        $sections = Section::select(['id', 'section_name', 'year_level', 'school_year', 'semester'])
+            ->where('status', 1)
+            ->orderBy('section_name')
+            ->get();
 
         return Inertia::render('Enroll/Create', [
-            'users' => $users,
-            'subjects' => $subjects,
+            'users'    => $users,
+            'sections' => $sections,
         ]);
     }
 
@@ -54,88 +47,77 @@ class EnrollController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'user_id' => ['required', 'exists:users,id'],
-            'subjects' => ['required', 'array', 'min:1'],
-            'subjects.*' => ['required', 'exists:subjects,id'],
+        $validated = $request->validate([
+            'user_id'     => ['required', 'exists:users,id'],
+            'section_id'  => ['required', 'exists:sections,id'],
+            'school_year' => ['required', 'string', 'max:20'],
+            'status'      => ['required', 'in:active,inactive,dropped'],
         ]);
 
-        foreach ($request->input('subjects', []) as $subjectId) {
-            Enrollment::firstOrCreate([
-                'user_id' => $request->input('user_id'),
-                'subject_id' => $subjectId,
+        // Prevent duplicate enrollment in the same section & school year
+        $exists = Enrollment::where('user_id', $validated['user_id'])
+            ->where('section_id', $validated['section_id'])
+            ->where('school_year', $validated['school_year'])
+            ->exists();
+
+        if ($exists) {
+            return back()->withErrors([
+                'user_id' => 'This student is already enrolled in that section for the given school year.',
             ]);
         }
 
-        return redirect()->route('enroll')->with('success', 'Enrollment saved successfully.');
-    }
+        Enrollment::create($validated);
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Enrollment $enroll)
-    {
-        //
+        return redirect()->route('enroll')->with('success', 'Enrollment created successfully.');
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(User $student)
+    public function edit(Enrollment $enrollment)
     {
-        $users = User::select(['id', 'name', 'email'])
-        ->where('role', 'student')
-        ->get();
-        $subjects = Subject::select(['id', 'subject_name', 'subject_code'])->get();
+        $users = User::select(['id', 'name', 'lname', 'email'])
+            ->where('role', 'Student')
+            ->get();
 
-        $student->load('enrollments.subject');
-        $selectedSubjects = $student->enrollments->pluck('subject_id')->toArray();
+        $sections = Section::select(['id', 'section_name', 'year_level', 'school_year', 'semester'])
+            ->where('status', 1)
+            ->orderBy('section_name')
+            ->get();
 
         return Inertia::render('Enroll/Edit', [
-            'student' => $student,
-            'users' => $users,
-            'subjects' => $subjects,
-            'selectedSubjects' => $selectedSubjects,
+            'enrollment' => $enrollment,
+            'users'      => $users,
+            'sections'   => $sections,
         ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, User $student)
+    public function update(Request $request, Enrollment $enrollment)
     {
-        $request->validate([
-            'user_id' => ['required', 'exists:users,id'],
-            'subjects' => ['required', 'array', 'min:1'],
-            'subjects.*' => ['required', 'exists:subjects,id'],
+        $validated = $request->validate([
+            'user_id'     => ['required', 'exists:users,id'],
+            'section_id'  => ['required', 'exists:sections,id'],
+            'school_year' => ['required', 'string', 'max:20'],
+            'status'      => ['required', 'in:active,inactive,dropped'],
         ]);
 
-        $userId = (int) $request->input('user_id');
-        $subjectIds = array_map('intval', (array) $request->input('subjects', []));
+        // Prevent duplicate (excluding the current record)
+        $exists = Enrollment::where('user_id', $validated['user_id'])
+            ->where('section_id', $validated['section_id'])
+            ->where('school_year', $validated['school_year'])
+            ->where('id', '!=', $enrollment->id)
+            ->exists();
 
-        if ($userId === (int) $student->id) {
-            Enrollment::where('user_id', $student->id)
-                ->whereNotIn('subject_id', $subjectIds)
-                ->delete();
-
-            foreach ($subjectIds as $subjectId) {
-                Enrollment::firstOrCreate([
-                    'user_id' => $student->id,
-                    'subject_id' => $subjectId,
-                ]);
-            }
-        } else {
-            Enrollment::where('user_id', $student->id)
-                ->whereNotIn('subject_id', $subjectIds)
-                ->delete();
-
-            foreach ($subjectIds as $subjectId) {
-                Enrollment::firstOrCreate([
-                    'user_id' => $userId,
-                    'subject_id' => $subjectId,
-                ]);
-            }
+        if ($exists) {
+            return back()->withErrors([
+                'user_id' => 'This student is already enrolled in that section for the given school year.',
+            ]);
         }
+
+        $enrollment->update($validated);
 
         return redirect()->route('enroll')->with('success', 'Enrollment updated successfully.');
     }
@@ -143,8 +125,10 @@ class EnrollController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Enrollment $enroll)
+    public function destroy(Enrollment $enrollment)
     {
-        //
+        $enrollment->delete();
+
+        return redirect()->route('enroll')->with('success', 'Enrollment deleted successfully.');
     }
 }

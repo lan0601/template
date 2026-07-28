@@ -81,11 +81,11 @@ export default function Index() {
                                                     {section.school_year}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    {section.status === '1' ? (
+                                                    {section.status === 1 ? (
                                                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                                             Active
                                                         </span>
-                                                    ) : section.status === '0' ? (
+                                                    ) : section.status === 0 ? (
                                                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                                                             Inactive
                                                         </span>

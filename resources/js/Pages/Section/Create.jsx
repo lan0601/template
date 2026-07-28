@@ -79,7 +79,7 @@ export default function Create() {
                                     School Year
                                 </label>
                                 <input
-                                    type="number"
+                                    type="text"
                                     name="school_year"
                                     value={data.school_year}
                                     onChange={handleChange}
