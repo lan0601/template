@@ -11,7 +11,7 @@ export default function AuthenticatedLayout({ header, children }) {
     const currentRoute = route().current();
 
     const isDashboardActive = route().current('dashboard') || route().current('attendance');
-    const isMasterActive = route().current('userrole*') || route().current('subject*') || route().current('section*') || route().current('classroom*');
+    const isMasterActive = route().current('userrole*') || route().current('subject') || route().current('section*') || route().current('classroom*');
     const isAcademicActive = route().current('subjectoffering*');
     const isTransactionsActive = route().current('enroll*');
 

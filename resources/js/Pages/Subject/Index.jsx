@@ -33,7 +33,7 @@ export default function Index() {
                             href={route('subject.create')}
                             className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white text-center rounded hover:bg-blue-700"
                         >
-                            New Subject
+                            + New Subject
                         </Link>
                     </div>
 

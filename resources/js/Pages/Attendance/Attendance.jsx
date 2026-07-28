@@ -96,7 +96,7 @@ export default function Dashboard() {
                     <div className="p-6 text-gray-900">
 
                         {/* Student Only */}
-                        {["Student", "admin"].includes(user.role) && (
+                        {["Student", "Admin"].includes(user.role) && (
                             <QRScanner onScan={handleScan} />
                         )}
 
