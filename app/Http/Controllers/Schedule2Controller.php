@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Enrollment; // Added for fetching student enrollments
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; // Added for authenticated user
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use App\Models\Schedule2;
 use App\Models\Classroom;
 use App\Models\Subject;
+use App\Models\SubjectOffering;
 use App\Models\User;
 use App\Mail\ScheduleStatusNotification;
 use Inertia\Inertia;
@@ -16,57 +19,72 @@ class Schedule2Controller extends Controller
 {
     public function index()
     {
-        $userId = auth()->id();
-
-        $events = Schedule2::with('approver')
-            ->where(function ($query) use ($userId) {
-                $query->where('user_id', $userId)
-                    ->orWhere('approved_by', $userId);
-            })
-            ->get()
-            ->map(function ($schedule) {
-                return [
-                    'id' => $schedule->id,
-                    'title' => $schedule->title,
-
-                    'daysOfWeek' => [$schedule->day], // Monday
-
-                    'startTime' => \Carbon\Carbon::parse($schedule->start_time)->format('H:i:s'),
-                    'endTime' => \Carbon\Carbon::parse($schedule->end_time)->format('H:i:s'),
-
-                    'startRecur' => $schedule->start_date,
-                    'endRecur' => $schedule->end_date,
-
-                    'description' => $schedule->description,
-                    'status' => $schedule->status,
-                    'approved_by' => $schedule->approved_by,
-                    'approved_by_name' => $schedule->approver?->name,
-
-                    'color' => $schedule->status === 'approved'
-                        ? 'green'
-                        : ($schedule->status === 'rejected' ? 'red' : 'blue'),
-
-                    'textColor' => 'white',
-                ];
-            });
-            // dd($events);
-        $users = User::all();
-        $classrooms = Classroom::all();
-        $subjects = Subject::all();
-        // dd($users, $classrooms);
-
-        return Inertia::render('Schedule2/Schedule2dashboard', [
-            'events' => $events,
-            'users' => $users,
-            'classrooms' => $classrooms,
-            'subjects' => $subjects,
-        ]);
+        // This will render the new React component (Schedule2/Index.jsx)
+        return Inertia::render('Schedule2/Index');
     }
 
-    // public function new()
-    // {
-    //     return Inertia::render('Posts/NewSchedule');
-    // }
+    /**
+     * Fetch schedule events for the authenticated user based on Subject Offerings.
+     */
+    public function get(Request $request)
+    {
+        $user = Auth::user();
+
+        $events = [];
+        $dayMapping = [
+            'Sunday' => 0, 'Monday' => 1, 'Tuesday' => 2, 'Wednesday' => 3,
+            'Thursday' => 4, 'Friday' => 5, 'Saturday' => 6
+        ];
+
+        $subjectOfferings = collect();
+
+        switch ($user->role) {
+
+            case 'Student':
+                $enrollments = Enrollment::where('user_id', $user->id)
+                    ->with([
+                        'subjectOffering.subject',
+                        'subjectOffering.classroom',
+                        'subjectOffering.teacher'
+                    ])
+                    ->get();
+
+                $subjectOfferings = $enrollments->map(function ($enrollment) {
+                    return $enrollment->subjectOffering;
+                })->filter(); // Filter out any null subject offerings
+                break;
+
+            case 'Teacher':
+
+                $subjectOfferings = SubjectOffering::where('teacher_id', $user->id)
+                    ->with(['subject', 'classroom', 'teacher'])
+                    ->get();
+
+                break;
+
+            case 'Admin':
+
+                $subjectOfferings = SubjectOffering::with(['subject', 'classroom', 'teacher'])->get();
+                break;
+
+            default:
+                return response()->json([]);
+        }
+
+        foreach ($subjectOfferings as $subjectOffering) {
+            $events[] = [
+                'title' => $subjectOffering->subject->subject_name,
+                'startTime' => \Carbon\Carbon::parse($subjectOffering->start_time)->format('H:i:s'),
+                'endTime' => \Carbon\Carbon::parse($subjectOffering->end_time)->format('H:i:s'),
+                'daysOfWeek' => [$dayMapping[$subjectOffering->day]],
+                'extendedProps' => [
+                    'room' => $subjectOffering->classroom->room_name ?? 'N/A',
+                    'teacher' => $subjectOffering->teacher->name ?? 'N/A',
+                ],
+            ];
+        }
+        return response()->json($events);
+    }
 
     public function store(Request $request)
     {

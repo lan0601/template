@@ -11,6 +11,7 @@ use App\Http\Controllers\SectionController;
 use App\Http\Controllers\UserroleController;
 use App\Http\Controllers\EnrollController;
 use App\Http\Controllers\SubjectOfferingController;
+use App\Http\Controllers\EnrollmentSubjectController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -84,7 +85,8 @@ Route::post('/schedule2/{schedule}/status', [Schedule2Controller::class, 'update
     ->middleware(['auth', 'verified']);
 
 Route::post('/schedule2s/events', [Schedule2Controller::class, 'get'])
-    ->middleware(['auth', 'verified']);
+        ->middleware(['auth', 'verified'])
+        ->name('schedule2.events');
 
 // Attendance route ----------------------------------------------
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -140,7 +142,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/subjectoffering', [SubjectOfferingController::class, 'store'])->name('subjectoffering.store');
     Route::get('/subjectoffering/{subjectoffering}/edit', [SubjectOfferingController::class, 'edit'])->name('subjectoffering.edit');
     Route::patch('/subjectoffering/{subjectoffering}', [SubjectOfferingController::class, 'update'])->name('subjectoffering.update');
-    // Route::delete('/subjectoffering/{subjectOffering}', [SubjectOfferingController::class, 'destroy'])->name('subjectoffering.destroy');
+    Route::delete('/subjectoffering/{subjectOffering}', [SubjectOfferingController::class, 'destroy'])->name('subjectoffering.destroy');
+});
+
+// Enrollment Subject routes ---------------------------------------
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/enrollmentsubject', [EnrollmentSubjectController::class, 'index'])->name('enrollmentsubject');
+    Route::get('/enrollmentsubject/create', [EnrollmentSubjectController::class, 'create'])->name('enrollmentsubject.create');
+    Route::post('/enrollmentsubject', [EnrollmentSubjectController::class, 'store'])->name('enrollmentsubject.store');
+    Route::get('/enrollmentsubject/{enrollment_subject}/edit', [EnrollmentSubjectController::class, 'edit'])->name('enrollmentsubject.edit');
+    Route::patch('/enrollmentsubject/{enrollment_subject}', [EnrollmentSubjectController::class, 'update'])->name('enrollmentsubject.update');
+    Route::delete('/enrollmentsubject/{enrollment_subject}', [EnrollmentSubjectController::class, 'destroy'])->name('enrollmentsubject.destroy');
 });
 
 //Dashboard route ------------------------------------------------

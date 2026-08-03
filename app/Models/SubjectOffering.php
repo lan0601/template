@@ -19,6 +19,7 @@ class SubjectOffering extends Model
         'end_time',
         'capacity',
         'status',
+        'remove',
     ];
 
     public function subject()

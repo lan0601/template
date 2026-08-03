@@ -72,8 +72,8 @@ export default function Calendar({ events, users, classrooms, subjects }) {
             end_time: '',
             approved_by: '',
         })
-        setModalMode('create')
-        setShowModal(true)
+        // setModalMode('create')
+        // setShowModal(true)
     };
 
     const handleEventClick = (clickInfo) => {

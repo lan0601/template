@@ -1,22 +1,38 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useState } from 'react';
+import Modal from '@/Components/Modal';
+import SecondaryButton from '@/Components/SecondaryButton';
+import DangerButton from '@/Components/DangerButton';
 
-export default function Index() {
-    const { subjectofferings } = usePage().props;
-    const { delete: destroy, processing } = useForm();
-    
-    const handleDelete = (offering) => {
-        const subjectTitle = offering.subject?.subject_name || 'Subject Offering';
-        if (!confirm(`Delete subject offering for ${subjectTitle} (${offering.section})?`)) {
-            return;
-        }
+export default function Index({ auth }) {
+    const { subjectofferings, flash } = usePage().props;
+    const [confirmingDeletion, setConfirmingDeletion] = useState(false);
+    const [offeringToDelete, setOfferingToDelete] = useState(null);
 
-        destroy(route('subject_offering.destroy', offering.id), {
-            preserveScroll: true,
-        });
+    const confirmDeletion = (offering) => {
+        setOfferingToDelete(offering);
+        setConfirmingDeletion(true);
     };
+
+    const closeModal = () => {
+        setConfirmingDeletion(false);
+        setOfferingToDelete(null);
+    };
+
+    const deleteOffering = (e) => {
+        e.preventDefault();
+        if (offeringToDelete) {
+            // Assuming you have a destroy route named 'subjectoffering.destroy'
+            router.delete(route('subjectoffering.destroy', offeringToDelete.id), {
+                onSuccess: () => closeModal(),
+            });
+        }
+    };
+
     return (
         <AuthenticatedLayout
+            user={auth.user}
             header={
                 <h2 className="text-xl font-semibold leading-tight text-gray-800">
                     Subject Offerings
@@ -36,6 +52,12 @@ export default function Index() {
                             + New Subject Offering
                         </Link>
                     </div>
+
+                    {flash?.success && (
+                        <div className="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
+                            <span className="block sm:inline">{flash.success}</span>
+                        </div>
+                    )}
 
                     <div className="overflow-hidden bg-white shadow sm:rounded-lg border border-gray-200">
                         <div className="overflow-x-auto">
@@ -127,9 +149,8 @@ export default function Index() {
                                                     </Link>
                                                     <button
                                                         type="button"
-                                                        onClick={() => handleDelete(offering)}
-                                                        disabled={processing}
-                                                        className="inline-flex items-center px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 transition"
+                                                        onClick={() => confirmDeletion(offering)}
+                                                        className="inline-flex items-center px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition"
                                                     >
                                                         Delete
                                                     </button>
@@ -143,7 +164,21 @@ export default function Index() {
                     </div>
                 </div>
             </div>
+
+            <Modal show={confirmingDeletion} onClose={closeModal}>
+                <form onSubmit={deleteOffering} className="p-6">
+                    <h2 className="text-lg font-medium text-gray-900">
+                        Are you sure you want to delete this subject offering?
+                    </h2>
+                    <p className="mt-1 text-sm text-gray-600">
+                        This action cannot be undone. This will remove the subject offering and may affect existing student enrollments.
+                    </p>
+                    <div className="mt-6 flex justify-end">
+                        <SecondaryButton onClick={closeModal}>Cancel</SecondaryButton>
+                        <DangerButton className="ms-3">Delete Subject Offering</DangerButton>
+                    </div>
+                </form>
+            </Modal>
         </AuthenticatedLayout>
     );
 }
-

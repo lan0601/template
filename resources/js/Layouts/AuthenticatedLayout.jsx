@@ -10,9 +10,9 @@ export default function AuthenticatedLayout({ header, children }) {
     const { user, permissions = {} } = usePage().props.auth;
     const currentRoute = route().current();
 
-    const isDashboardActive = route().current('dashboard') || route().current('attendance');
+    const isDashboardActive = route().current('dashboard') || route().current('attendance') || route().current('schedule2');
     const isMasterActive = route().current('userrole*') || route().current('subject') || route().current('section*') || route().current('classroom*');
-    const isAcademicActive = route().current('subjectoffering*');
+    const isAcademicActive = route().current('subjectoffering*') || route().current('enrollmentsubject*');
     const isTransactionsActive = route().current('enroll*');
 
     const [showNav, setShowNav] = useRemember(true, 'showNav');
@@ -36,6 +36,51 @@ export default function AuthenticatedLayout({ header, children }) {
 
         return Boolean(permissions?.[page]);
     };
+
+    const navItems = [
+        {
+            title: 'Dashboard',
+            isOpen: openDashboard,
+            setIsOpen: setOpenDashboard,
+            groupPermission: 'dashboard',
+            links: [
+                { name: 'Dashboard', routeName: 'dashboard', active: 'dashboard' },
+                { name: 'Attendance', routeName: 'attendance', active: 'attendance' },
+                { name: 'Schedule', routeName: 'schedule2', active: 'schedule2' },
+            ],
+        },
+        {
+            title: 'Master Data',
+            isOpen: openMaster,
+            setIsOpen: setOpenMaster,
+            marginTop: true,
+            links: [
+                { name: 'Users', routeName: 'userrole', active: 'userrole', permission: 'userrole' },
+                { name: 'Subjects', routeName: 'subject', active: 'subject', permission: 'subject' },
+                { name: 'Sections', routeName: 'section', active: 'section', permission: 'section' },
+                { name: 'Rooms', routeName: 'classroom', active: 'classroom', permission: 'classroom' },
+            ],
+        },
+        {
+            title: 'Academic Setup',
+            isOpen: openAcademic,
+            setIsOpen: setOpenAcademic,
+            marginTop: true,
+            links: [
+                { name: 'Subject Offerings', routeName: 'subjectoffering', active: 'subjectoffering*', permission: 'subjectoffering' },
+                { name: 'Enrollment Subject', routeName: 'enrollmentsubject', active: 'enrollmentsubject*', permission: 'enrollmentsubject' },
+            ],
+        },
+        {
+            title: 'Transactions',
+            isOpen: openTransactions,
+            setIsOpen: setOpenTransactions,
+            marginTop: true,
+            links: [
+                { name: 'Enrollment', routeName: 'enroll', active: 'enroll', permission: 'enroll' },
+            ],
+        },
+    ];
 
     return (
         <div className="min-h-screen bg-gray-100">
@@ -62,108 +107,44 @@ export default function AuthenticatedLayout({ header, children }) {
                         </Link>
                     </div>
                     <nav className="flex flex-col p-2 space-y-2 overflow-y-auto">
-                        <div>
-                            <button
-                                type="button"
-                                onClick={() => setOpenDashboard(!openDashboard)}
-                                className="w-full flex items-center justify-between px-4 py-2 text-sm font-medium text-left text-gray-700 hover:bg-gray-50 rounded"
-                            >
-                                <span>Dashboard</span>
-                                <span className="text-xs">{openDashboard ? '▾' : '▸'}</span>
-                            </button>
-                            {openDashboard && canAccess('dashboard') && (
-                                <div className="mt-1 ml-2 flex flex-col space-y-1">
-                                    <NavLink href={route('dashboard')} active={route().current('dashboard')} className="px-4 py-2 rounded hover:bg-black hover:text-white">
-                                        Dashboard
-                                    </NavLink>
-                                    <NavLink href={route('attendance')} active={route().current('attendance')} className="px-4 py-2 rounded hover:bg-black hover:text-white">
-                                        Attendance
-                                    </NavLink>
-                                </div>
-                            )}
-                            
-                        </div>
+                        {navItems.map((section) => {
+                            const canShowSection = section.groupPermission
+                                ? canAccess(section.groupPermission)
+                                : section.links.some(link => !link.permission || canAccess(link.permission));
 
-                        <div>
-                            <button
-                                type="button"
-                                onClick={() => setOpenMaster(!openMaster)}
-                                className="w-full flex items-center justify-between px-4 py-2 text-sm font-medium text-left text-gray-700 hover:bg-gray-50 rounded mt-4"
-                            >
-                                <span>Master Data</span>
-                                <span className="text-xs">{openMaster ? '▾' : '▸'}</span>
-                            </button>
-                            {openMaster && (
-                                <div className="mt-1 ml-2 flex flex-col space-y-1">
-                                    {canAccess('userrole') && (
-                                        <NavLink href={route('userrole')} active={route().current('userrole')} className="px-4 py-2 rounded hover:bg-black hover:text-white">
-                                            Users
-                                        </NavLink>
-                                    )}
-                                    {canAccess('subject') && (
-                                        <NavLink href={route('subject')} active={route().current('subject')} className="px-4 py-2 rounded hover:bg-black hover:text-white">
-                                            Subjects
-                                        </NavLink>
-                                    )}
-                                    {/* {canAccess('users') && (
-                                        <NavLink href={route('userrole')} active={route().current('userrole')} className="px-4 py-2 rounded hover:bg-black hover:text-white">
-                                            Teachers
-                                        </NavLink>
-                                    )} */}
-                                    {canAccess('section') && (
-                                        <NavLink href={route('section')} active={route().current('section')} className="px-4 py-2 rounded hover:bg-black hover:text-white">
-                                            Sections
-                                        </NavLink>
-                                    )}
-                                    {canAccess('classroom') && (
-                                        <NavLink href={route('classroom')} active={route().current('classroom')} className="px-4 py-2 rounded hover:bg-black hover:text-white">
-                                            Rooms
-                                        </NavLink>
+                            if (!canShowSection) {
+                                return null;
+                            }
+
+                            return (
+                                <div key={section.title}>
+                                    <button
+                                        type="button"
+                                        onClick={() => section.setIsOpen(!section.isOpen)}
+                                        className={`w-full flex items-center justify-between px-4 py-2 text-sm font-medium text-left text-gray-700 hover:bg-gray-50 rounded ${section.marginTop ? 'mt-4' : ''}`}
+                                    >
+                                        <span>{section.title}</span>
+                                        <span className="text-xs">{section.isOpen ? '▾' : '▸'}</span>
+                                    </button>
+                                    {section.isOpen && (
+                                        <div className="mt-1 ml-2 flex flex-col space-y-1">
+                                            {section.links.map(link => (
+                                                (!link.permission || canAccess(link.permission)) && (
+                                                    <NavLink
+                                                        key={link.routeName}
+                                                        href={route(link.routeName)}
+                                                        active={route().current(link.active)}
+                                                        className="px-4 py-2 rounded hover:bg-black hover:text-white"
+                                                    >
+                                                        {link.name}
+                                                    </NavLink>
+                                                )
+                                            ))}
+                                        </div>
                                     )}
                                 </div>
-                            )}
-                        </div>
-
-                        <div>
-                            <button
-                                type="button"
-                                onClick={() => setOpenAcademic(!openAcademic)}
-                                className="w-full flex items-center justify-between px-4 py-2 text-sm font-medium text-left text-gray-700 hover:bg-gray-50 rounded mt-4"
-                            >
-                                <span>Academic Setup</span>
-                                <span className="text-xs">{openAcademic ? '▾' : '▸'}</span>
-                            </button>
-
-                            {openAcademic && (
-                                <div className="mt-1 ml-2 flex flex-col space-y-1">
-                                    {canAccess('subjectoffering') && (
-                                        <NavLink href={route('subjectoffering')} active={route().current('subjectoffering*')} className="px-4 py-2 rounded hover:bg-black hover:text-white">
-                                            Subject Offerings
-                                        </NavLink>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
-                        <div>
-                            <button
-                                type="button"
-                                onClick={() => setOpenTransactions(!openTransactions)}
-                                className="w-full flex items-center justify-between px-4 py-2 text-sm font-medium text-left text-gray-700 hover:bg-gray-50 rounded mt-4"
-                            >
-                                <span>Transactions</span>
-                                <span className="text-xs">{openTransactions ? '▾' : '▸'}</span>
-                            </button>
-                            {openTransactions && (
-                                <div className="mt-1 ml-2 flex flex-col space-y-1">
-                                    {canAccess('enroll') && (
-                                        <NavLink href={route('enroll')} active={route().current('enroll')} className="px-4 py-2 rounded hover:bg-black hover:text-white">
-                                            Enrollment
-                                        </NavLink>
-                                    )}
-                                </div>
-                            )}
-                        </div>
+                            );
+                        })}
                     </nav>
                     <div className="mt-auto p-4 border-t">
                         <Dropdowntop>

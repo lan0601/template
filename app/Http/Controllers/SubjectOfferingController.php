@@ -19,6 +19,7 @@ class SubjectOfferingController extends Controller
     public function index()
     {
         $subjectOfferings = SubjectOffering::with(['subject', 'teacher', 'classroom'])
+            ->where('remove', 0)
             ->latest()
             ->get()
             ->map(function ($offering) {
@@ -130,8 +131,10 @@ class SubjectOfferingController extends Controller
      */
     public function destroy(SubjectOffering $subjectOffering)
     {
-        $subjectOffering->delete();
+        $subjectOffering->update([
+            'remove' => 1,
+        ]);
 
-        return redirect(route('subject_offering'))->with('message', 'Subject Offering deleted successfully.');
+        return redirect()->back()->with('success', 'Subject offering removed successfully.');
     }
 }

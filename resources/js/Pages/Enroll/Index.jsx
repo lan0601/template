@@ -3,6 +3,7 @@ import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 
 export default function Index() {
     const { enrollments, flash } = usePage().props;
+    console.log(enrollments,flash)
     const { delete: destroy, processing } = useForm();
 
     const statusBadge = (status) => {
