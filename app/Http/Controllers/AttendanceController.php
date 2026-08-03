@@ -9,6 +9,7 @@ use App\Models\Classroom;
 use App\Models\Enroll;
 use App\Models\Attendance;
 use App\Models\Subject;
+use App\Models\SubjectOffering;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -50,29 +51,58 @@ class AttendanceController extends Controller
         //         ];
         //     });
         // $users = User::all();
-        if($userRole === 'student'){
+        if ($userRole === 'student') {
             $attendanceRecords = Attendance::query()
-            ->where('user_id', $user->id)
-            ->with(['subject', 'classroom'])
-            ->orderByDesc('attendance_date')
-            ->orderByDesc('time_in')
-            ->get()
-            ->map(function ($record) {
-                return [
-                    'id' => $record->id,
-                    'date' => $record->attendance_date,
-                    'time' => Carbon::parse($record->time_in)->format('h:i A'),
-                    'classroom' => $record->classroom?->room_number ?? 'N/A',
-                    'subject' => $record->subject?->subject_name ?? 'N/A',
-                    'status' => $record->status,
-                ];
-            });
+                ->where('user_id', $user->id)
+                ->with(['subject', 'classroom'])
+                ->orderByDesc('attendance_date')
+                ->orderByDesc('time_in')
+                ->get()
+                ->map(function ($record) {
+                    return [
+                        'id' => $record->id,
+                        'date' => $record->attendance_date,
+                        'time' => Carbon::parse($record->time_in)->format('h:i A'),
+                        'classroom' => $record->classroom?->room_number ?? 'N/A',
+                        'subject' => $record->subject?->subject_name ?? 'N/A',
+                        'status' => $record->status,
+                    ];
+                });
 
             return Inertia::render('Attendance/Attendance', [
                 'attendanceRecords' => $attendanceRecords,
+                'teacherSubjects' => [],
             ]);
-        }else{
-            $attendanceRecords = Attendance::query()
+        }
+
+        if ($userRole === 'Teacher') {
+            $teacherSubjects = SubjectOffering::query()
+                ->with(['subject', 'classroom'])
+                ->where('teacher_id', $user->id)
+                ->where('remove', 0)
+                ->orderBy('school_year')
+                ->orderBy('semester')
+                ->get()
+                ->map(function ($offering) {
+                    return [
+                        'id' => $offering->id,
+                        'subject_name' => $offering->subject?->subject_name ?? 'N/A',
+                        'subject_code' => $offering->subject?->subject_code ?? 'N/A',
+                        'classroom' => $offering->classroom?->room_number ?? 'N/A',
+                        'section' => $offering->section?->section_name ?? 'N/A',
+                        'school_year' => $offering->school_year,
+                        'semester' => $offering->semester,
+                        'status' => $offering->status,
+                    ];
+                });
+
+            return Inertia::render('Attendance/Attendance', [
+                'attendanceRecords' => [],
+                'teacherSubjects' => $teacherSubjects,
+            ]);
+        }
+
+        $attendanceRecords = Attendance::query()
             ->with(['subject', 'classroom', 'user'])
             ->orderByDesc('attendance_date')
             ->orderByDesc('time_in')
@@ -89,11 +119,115 @@ class AttendanceController extends Controller
                 ];
             });
 
-            return Inertia::render('Attendance/Attendance', [
-                'attendanceRecords' => $attendanceRecords,
-            ]);
+        return Inertia::render('Attendance/Attendance', [
+            'attendanceRecords' => $attendanceRecords,
+            'teacherSubjects' => [],
+        ]);
+    }
+
+    public function subjectStudents(SubjectOffering $subjectOffering)
+    {
+        $user = Auth::user();
+
+        if ($user->role !== 'Teacher' || $subjectOffering->teacher_id !== $user->id) {
+            abort(403);
         }
-        
+
+        // return response()->json([
+        //     'subjectOffering' => [
+        //         'id' =>$subjectOffering->id,
+        //     ]
+        // ]);
+        // $students = SubjectOffering::query()
+        //     ->where('id', $subjectOffering->id)
+        //     ->where('remove', 0)
+        //     ->with(['enrollments.enrollment.student'])
+        //     ->get();
+
+            // ->map(function ($enrollmentSubject) {
+            //     $student = $enrollmentSubject;
+
+            //     if (! $student) {
+            //         return $student;
+            //     }
+
+            //     $attendance = Attendance::where('user_id', $student->id)
+            //         ->whereDate('attendance_date', now())
+            //         ->first();
+
+            //     return [
+            //         'id' => $student->id,
+            //         'name' => trim(($student->name ?? '') . ' ' . ($student->lname ?? '')) ?: 'N/A',
+            //         'email' => $student->email ?? 'N/A',
+            //         'status' => $attendance?->status ?? 'unmarked',
+            //     ];
+            // })
+            // ->filter()
+            // ->values();
+
+        // return response()->json([
+        //     'students' => $students,
+        // ]);
+
+        $students = SubjectOffering::where('id', $subjectOffering->id)
+        ->where('remove', 0)
+        ->with(['enrollments.enrollment.student'])
+        ->get()
+        ->flatMap(function ($offering) {
+
+            return $offering->enrollments->map(function ($enrollmentSubject) {
+
+                $student = $enrollmentSubject->enrollment->student;
+
+                $attendance = Attendance::where('user_id', $student->id)
+                    ->whereDate('attendance_date', now())
+                    ->first();
+
+                return [
+                    'id' => $student->id,
+                    'name' => trim($student->name . ' ' . $student->lname),
+                    'email' => $student->email,
+                    'status' => $attendance?->status ?? 'unmarked',
+                ];
+            });
+
+        })
+        ->values();
+        return response()->json([
+            'students' => $students,
+        ]);
+    }
+
+    public function markStudentAttendance(Request $request, SubjectOffering $subjectOffering)
+    {
+        $user = Auth::user();
+
+        if ($user->role !== 'Teacher' || $subjectOffering->teacher_id !== $user->id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'student_id' => ['required', 'exists:users,id'],
+            'status' => ['required', 'in:present,absent,late'],
+        ]);
+
+        $attendance = Attendance::updateOrCreate([
+            'user_id' => $validated['student_id'],
+            'attendance_date' => now()->toDateString(),
+        ], [
+            'subject_id' => $subjectOffering->subject_id,
+            'classroom_id' => $subjectOffering->classroom_id,
+            'status' => $validated['status'],
+            'time_in' => now()->format('H:i'),
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'attendance' => [
+                'student_id' => $attendance->user_id,
+                'status' => $attendance->status,
+            ],
+        ]);
     }
 
     public function scan(Request $request)

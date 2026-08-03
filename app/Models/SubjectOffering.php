@@ -39,5 +39,10 @@ class SubjectOffering extends Model
         $classroom = $this->belongsTo(Classroom::class,'classroom_id');
         return $classroom;
     }
+
+    public function enrollments()
+    {
+        return $this->hasMany(EnrollmentSubject::class, 'id');
+    }
 }
 
