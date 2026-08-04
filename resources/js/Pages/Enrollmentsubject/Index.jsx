@@ -1,20 +1,45 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, usePage, router } from '@inertiajs/react';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import Modal from '@/Components/Modal';
 import SecondaryButton from '@/Components/SecondaryButton';
 import DangerButton from '@/Components/DangerButton';
 
 export default function Index({ auth }) {
     const { enrollmentSubjects, flash } = usePage().props;
-    console.log(enrollmentSubjects);
     const [confirmingDeletion, setConfirmingDeletion] = useState(false);
     const [subjectToDelete, setSubjectToDelete] = useState(null);
+    const [expandedStudentId, setExpandedStudentId] = useState(null);
 
     const confirmDeletion = (enrollmentSubject) => {
         setSubjectToDelete(enrollmentSubject);
         setConfirmingDeletion(true);
     };
+
+    const toggleStudentDetails = (studentId) => {
+        setExpandedStudentId((current) => (current === studentId ? null : studentId));
+    };
+
+    const students = enrollmentSubjects.reduce((acc, item) => {
+        const studentId = item.enrollment?.student?.id;
+        if (!studentId) {
+            return acc;
+        }
+
+        if (!acc[studentId]) {
+            acc[studentId] = {
+                id: studentId,
+                name: `${item.enrollment.student.name} ${item.enrollment.student.lname || ''}`.trim(),
+                email: item.enrollment.student.email || '',
+                subjects: [],
+            };
+        }
+
+        acc[studentId].subjects.push(item);
+        return acc;
+    }, {});
+
+    const studentList = Object.values(students);
 
     const closeModal = () => {
         setConfirmingDeletion(false);
@@ -62,16 +87,7 @@ export default function Index({ auth }) {
                                             Student
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                            Subject
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                            Teacher
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                            Classroom
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                            Status
+                                            Enrolled Subjects
                                         </th>
                                         <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
                                             Actions
@@ -79,97 +95,98 @@ export default function Index({ auth }) {
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                        {enrollmentSubjects.length > 0 ? (
-                                            enrollmentSubjects.map((item) => (
-                                                // <tr key={item.id}>
-                                                //     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                //         {item.enrollment?.student ? `${item.enrollment.student.name} ${item.enrollment.student.lname || ''}`.trim() : 'N/A'}
-                                                //     </td>
-                                                //     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                //         {item.subject_offering?.subject?.subject_name || 'N/A'}
-                                                //         <div className="text-xs text-gray-400">{item.subject_offering?.subject?.subject_code || ''}</div>
-                                                //     </td>
-                                                //     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                //         {item.subject_offering?.teacher ? `${item.subject_offering.teacher.name} ${item.subject_offering.teacher.lname || ''}`.trim() : 'N/A'}
-                                                //     </td>
-                                                //     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                //         {item.subject_offering?.classroom?.room_number || 'N/A'}
-                                                //     </td>
-                                                //     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                //         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${item.status === 'enrolled' ? 'bg-green-100 text-green-800' : item.status === 'dropped' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>
-                                                //             {item.status}
-                                                //         </span>
-                                                //     </td>
-                                                //     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                                                //         <Link
-                                                //             href={route('subjectoffering.edit', item.id)}
-                                                //             className="text-indigo-600 hover:text-indigo-900"
-                                                //         >
-                                                //             Edit
-                                                //         </Link>
-                                                //         <Link href={route('enrollmentsubject.edit', item.id)} className="text-indigo-600 hover:text-indigo-900">Edit</Link>
-                                                //         <button onClick={() => confirmDeletion(item)} className="text-red-600 hover:text-red-900">Delete</button>
-                                                //     </td>
-                                                // </tr>
-
-                                                <tr key={item.id} className="hover:bg-gray-50">
+                                    {studentList.length > 0 ? (
+                                        studentList.map((student) => (
+                                            <Fragment key={student.id}>
+                                                <tr className="hover:bg-gray-50">
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                        {item.enrollment?.student ? `${item.enrollment.student.name} ${item.enrollment.student.lname || ''}`.trim() : 'N/A'}
+                                                        {student.name || 'N/A'}
                                                         <div className="text-xs text-gray-400">
-                                                            {item.enrollment?.student?.email || ''}
+                                                            {student.email || ''}
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                        {item.subject_offering?.subject?.subject_name || 'N/A'}
-                                                        <div className="text-xs text-gray-400">{item.subject_offering?.subject?.subject_code || ''}
-                                                        </div>
+                                                    <td className="px-6 py-4 text-sm text-gray-900">
+                                                        <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
+                                                            {student.subjects.length} subject{student.subjects.length === 1 ? '' : 's'}
+                                                        </span>
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                        {item.subject_offering?.teacher ? `${item.subject_offering.teacher.name} ${item.subject_offering.teacher.lname || ''}`.trim() : 'N/A'}
+                                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => toggleStudentDetails(student.id)}
+                                                            className="inline-flex items-center px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
+                                                        >
+                                                            {expandedStudentId === student.id ? 'Hide' : 'View'}
+                                                        </button>
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                        {item.subject_offering?.classroom?.room_number || 'N/A'}
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                        {item.status === 'enrolled' ? (
-                                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                                    Enrolled
-                                                                </span>
-                                                        ) : item.status === 'dropped' ? (
-                                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                                                Dropped
-                                                            </span>
-                                                        ) : item.status === 'removed' ? (
-                                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                                                {item.status}
-                                                            </span>
-                                                        ) :<span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                                                {item.status}
-                                                            </span>
-                                                        }
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                                                    <Link
-                                                        href={route('enrollmentsubject.edit', item.id)}
-                                                        className="inline-flex items-center px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition"
-                                                    >
-                                                        Edit
-                                                    </Link>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => confirmDeletion(item)}
-                                                        className="inline-flex items-center px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition"
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                </td>
-                                                    
                                                 </tr>
-                                            ))
-                                        ) : (
-                                            <tr><td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">No enrolled subjects found.</td></tr>
-                                        )}
-                                    </tbody>
+                                                {expandedStudentId === student.id && (
+                                                    <tr>
+                                                        <td colSpan="3" className="px-6 py-4 bg-gray-50">
+                                                            <div className="overflow-hidden rounded-lg border border-gray-200">
+                                                                <table className="min-w-full divide-y divide-gray-200">
+                                                                    <thead className="bg-gray-100">
+                                                                        <tr>
+                                                                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Subject</th>
+                                                                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Teacher</th>
+                                                                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Classroom</th>
+                                                                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Status</th>
+                                                                            <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Actions</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody className="bg-white divide-y divide-gray-200">
+                                                                        {student.subjects.map((subject) => (
+                                                                            <tr key={subject.id} className="hover:bg-gray-50">
+                                                                                <td className="px-4 py-3 text-sm text-gray-900">
+                                                                                    {subject.subject_offering?.subject?.subject_name || 'N/A'}
+                                                                                    <div className="text-xs text-gray-400">{subject.subject_offering?.subject?.subject_code || ''}</div>
+                                                                                </td>
+                                                                                <td className="px-4 py-3 text-sm text-gray-900">
+                                                                                    {subject.subject_offering?.teacher ? `${subject.subject_offering.teacher.name} ${subject.subject_offering.teacher.lname || ''}`.trim() : 'N/A'}
+                                                                                </td>
+                                                                                <td className="px-4 py-3 text-sm text-gray-900">
+                                                                                    {subject.subject_offering?.classroom?.room_number || 'N/A'}
+                                                                                </td>
+                                                                                <td className="px-4 py-3 text-sm text-gray-900">
+                                                                                    {subject.status === 'enrolled' ? (
+                                                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Enrolled</span>
+                                                                                    ) : subject.status === 'dropped' ? (
+                                                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Dropped</span>
+                                                                                    ) : (
+                                                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">{subject.status}</span>
+                                                                                    )}
+                                                                                </td>
+                                                                                <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                                                                                    <Link
+                                                                                        href={route('enrollmentsubject.edit', subject.id)}
+                                                                                        className="inline-flex items-center px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition"
+                                                                                    >
+                                                                                        Edit
+                                                                                    </Link>
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() => confirmDeletion(subject)}
+                                                                                        className="inline-flex items-center px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition"
+                                                                                    >
+                                                                                        Delete
+                                                                                    </button>
+                                                                                </td>
+                                                                            </tr>
+                                                                        ))}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </Fragment>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="3" className="px-6 py-4 text-center text-sm text-gray-500">No enrolled subjects found.</td>
+                                        </tr>
+                                    )}
+                                </tbody>
                             </table>
                         </div>
                     </div>

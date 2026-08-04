@@ -3,7 +3,6 @@ import { Head, Link, useForm, usePage } from '@inertiajs/react';
 
 export default function Create() {
     const { subjects = [], teachers = [], classrooms = [], sections = [] } = usePage().props;
-    console.log(classrooms);
     const { data, setData, post, errors, processing } = useForm({
         subject_id: subjects[0]?.id || '',
         teacher_id: teachers[0]?.id || '',
@@ -105,7 +104,6 @@ export default function Create() {
                                     >
                                         <option value="" disabled>Select Classroom</option>
                                         {classrooms.map((room) => (
-                                            console.log(room),
                                             <option key={room.id} value={room.id}>
                                                 {room.room_number}
                                             </option>
@@ -121,15 +119,20 @@ export default function Create() {
                                     <label className="block text-sm font-medium text-gray-700">
                                         Section
                                     </label>
-                                    <input
-                                        type="text"
+                                    <select
                                         name="section"
                                         value={data.section}
                                         onChange={handleChange}
                                         required
                                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
-                                        placeholder="e.g. BSIT-1A"
-                                    />
+                                    >
+                                        <option value="" disabled>Select Section</option>
+                                        {sections.map((section) => (
+                                            <option key={section.id} value={section.section_name}>
+                                                {section.section_name} — {section.year_level} | {section.school_year} {section.semester}
+                                            </option>
+                                        ))}
+                                    </select>
                                     {errors.section && (
                                         <p className="mt-1 text-sm text-red-600">{errors.section}</p>
                                     )}

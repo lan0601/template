@@ -38,7 +38,7 @@ class SectionController extends Controller
             'section_name' => 'required|string|max:255|unique:sections',
             'course_id' => 'nullable|string|max:255',
             'year_level' => 'required|integer|min:1',
-            'school_year' => 'required|integer',
+            'school_year' => 'required|string|max:255',
             'semester' => 'required|integer',
             'status' => 'required|integer',
         ]);

@@ -10,6 +10,7 @@ export default function Create() {
         semester:'',
         status: 1,
     });
+                                console.log({data})
 
     const handleChange = (e) => {
         setData(e.target.name, e.target.value);
@@ -17,7 +18,6 @@ export default function Create() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        console.log(e);
         post(route('section.store'));
     };
 

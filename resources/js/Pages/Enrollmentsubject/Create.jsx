@@ -88,7 +88,7 @@ export default function Create() {
                                                     <strong>{offering.subject.subject_name}</strong> ({offering.subject.subject_code})
                                                     <br />
                                                     <span className="text-xs text-gray-600">
-                                                        {offering.section.section_name} | {offering.school_year} {offering.semester}
+                                                        Section: {offering.section || 'N/A'} | {offering.school_year} {offering.semester}
                                                     </span>
                                                 </span>
                                             </label>
