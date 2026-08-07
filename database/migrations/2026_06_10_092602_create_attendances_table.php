@@ -27,8 +27,8 @@ return new class extends Migration
 
             $table->timestamps();
 
-            // prevent duplicate attendance per day
-            $table->unique(['user_id', 'attendance_date']);
+            // allow one attendance entry per student per subject per day
+            $table->unique(['user_id', 'subject_id', 'attendance_date']);
         });
     }
 

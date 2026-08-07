@@ -16,7 +16,6 @@ export default function Schedule() {
         
         axios.post(route('schedule2.events'))
             .then(response => {
-                console.log(response.data)
                 successCallback(response.data);
             })
             .catch(error => {

@@ -15,7 +15,6 @@ export default function QRScanner({ onScan }) {
         scanner.render(
             (decodedText) => {
                 scanner.clear();
-                console.log("QR Result:", decodedText);
 
                 // Send the scanned value to the parent
                 onScan(decodedText);

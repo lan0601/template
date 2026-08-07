@@ -42,7 +42,7 @@ class SubjectOffering extends Model
 
     public function enrollments()
     {
-        return $this->hasMany(EnrollmentSubject::class, 'id');
+        return $this->hasMany(EnrollmentSubject::class, 'subject_offering_id');
     }
 }
 

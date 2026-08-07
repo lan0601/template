@@ -41,22 +41,22 @@ class Schedule2Controller extends Controller
         switch ($user->role) {
 
             case 'Student':
-                $enrollments = Enrollment::where('user_id', $user->id)
-                    ->with([
-                        'subjectOffering.subject',
-                        'subjectOffering.classroom',
-                        'subjectOffering.teacher'
-                    ])
+                $enrollmentIds = Enrollment::where('user_id', $user->id)
+                    ->where('status', 'active')
+                    ->pluck('id');
+
+                $subjectOfferings = SubjectOffering::query()
+                    ->with(['subject', 'classroom', 'teacher', 'enrollments'])
+                    ->where('remove', 0)
+                    ->whereHas('enrollments', function ($query) use ($enrollmentIds) {
+                        $query->whereIn('enrollment_id', $enrollmentIds);
+                    })
                     ->get();
-
-                $subjectOfferings = $enrollments->map(function ($enrollment) {
-                    return $enrollment->subjectOffering;
-                })->filter(); // Filter out any null subject offerings
                 break;
-
             case 'Teacher':
 
                 $subjectOfferings = SubjectOffering::where('teacher_id', $user->id)
+                    ->where('remove', 0)
                     ->with(['subject', 'classroom', 'teacher'])
                     ->get();
 
@@ -64,7 +64,9 @@ class Schedule2Controller extends Controller
 
             case 'Admin':
 
-                $subjectOfferings = SubjectOffering::with(['subject', 'classroom', 'teacher'])->get();
+                $subjectOfferings = SubjectOffering::with(['subject', 'classroom', 'teacher'])
+                ->where('remove', 0)
+                ->get();
                 break;
 
             default:
@@ -83,6 +85,7 @@ class Schedule2Controller extends Controller
                 ],
             ];
         }
+
         return response()->json($events);
     }
 

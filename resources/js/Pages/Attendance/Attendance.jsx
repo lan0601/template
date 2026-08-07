@@ -29,8 +29,10 @@ export default function Dashboard() {
             const res = await axios.post(route("attendance.scan"), {
                 room_code: roomCode,
             });
+            console.log(res.data);
 
             if (res.data.status === "error") {
+                console.log(res.data);
                 Swal.fire({
                     icon: "error",
                     title: "No Schedule",
@@ -95,7 +97,6 @@ export default function Dashboard() {
 
         try {
             const response = await axios.get(route('attendance.subject.students', subject.id));
-            console.log(response);
             setSubjectStudents(response.data.students || []);
         } catch (error) {
             console.error(error);
@@ -130,6 +131,8 @@ export default function Dashboard() {
             });
 
             if (response.data.status === 'success') {
+            console.log(response.data)
+
                 setSubjectStudents((prev) =>
                     prev.map((student) =>
                         student.id === studentId
@@ -313,7 +316,9 @@ export default function Dashboard() {
                                                     </td>
 
                                                     <td className="px-4 py-3 text-sm text-gray-700">
-                                                        {record.status}
+                                                        <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${record.status === 'present' ? 'bg-green-100 text-green-800' : record.status === 'absent' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-700'}`}>
+                                                            {record.status}
+                                                        </span>
                                                     </td>
                                                 </tr>
                                             ))}
@@ -380,7 +385,7 @@ export default function Dashboard() {
                                                 <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Student</th>
                                                 <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Email</th>
                                                 <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Attendance</th>
-                                                <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Action</th>
+                                                <th className="px-3 py-2 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Action</th>
                                             </tr>
                                         </thead>
                                         <tbody className="bg-white divide-y divide-gray-200">
@@ -391,21 +396,24 @@ export default function Dashboard() {
                                                     </td>
                                                 </tr>
                                             ) : subjectStudents.length > 0 ? (
-                                                console.log(subjectStudents),
                                                 subjectStudents.map((student) => (
                                                     <tr key={student.id}>
                                                         <td className="px-3 py-3 text-sm text-gray-700">{student.name}</td>
                                                         <td className="px-3 py-3 text-sm text-gray-500">{student.email}</td>
-                                                        <td className="px-3 py-3 text-sm text-gray-700 capitalize">{student.status}</td>
                                                         <td className="px-3 py-3 text-sm text-gray-700">
-                                                            <div className="flex flex-wrap gap-2">
+                                                        <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${student.status === 'present' ? 'bg-green-100 text-green-800' : student.status === 'absent' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-700'}`}>
+                                                            {student.status}
+                                                        </span>
+                                                    </td>
+                                                        <td className="px-3 py-3 text-sm text-gray-700 text-right">
+                                                            <div className="flex flex-wrap gap-2 justify-end">
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => markAttendance(student.id, 'present')}
                                                                     disabled={markingStudentId === student.id}
                                                                     className="rounded bg-green-600 px-3 py-1 text-white hover:bg-green-700 disabled:opacity-50"
                                                                 >
-                                                                    Present
+                                                                    P
                                                                 </button>
                                                                 <button
                                                                     type="button"
@@ -413,7 +421,7 @@ export default function Dashboard() {
                                                                     disabled={markingStudentId === student.id}
                                                                     className="rounded bg-red-600 px-3 py-1 text-white hover:bg-red-700 disabled:opacity-50"
                                                                 >
-                                                                    Absent
+                                                                    A
                                                                 </button>
                                                             </div>
                                                         </td>
