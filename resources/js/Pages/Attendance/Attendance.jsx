@@ -98,6 +98,7 @@ export default function Dashboard() {
         try {
             const response = await axios.get(route('attendance.subject.students', subject.id));
             setSubjectStudents(response.data.students || []);
+            console.log(response.data)
         } catch (error) {
             console.error(error);
             Swal.fire({
@@ -347,13 +348,13 @@ export default function Dashboard() {
                                 </p>
                             )}
                         </div>
-                        <button
+                        {/* <button
                             type="button"
                             onClick={closeSubjectModal}
                             className="text-gray-400 hover:text-gray-600"
                         >
                             Close
-                        </button>
+                        </button> */}
                     </div>
 
                     {selectedSubject ? (

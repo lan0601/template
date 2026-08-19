@@ -155,6 +155,7 @@ class AttendanceController extends Controller
                     'name' => trim($student->name . ' ' . $student->lname),
                     'email' => $student->email,
                     'status' => $attendance?->status ?? 'unmarked',
+                    'dataNow' => now()->toDateString(),
                 ];
             });
 
@@ -168,6 +169,7 @@ class AttendanceController extends Controller
     public function markStudentAttendance(Request $request, SubjectOffering $subjectOffering)
     {
         $user = Auth::user();
+        $now = now()->setTimezone('Asia/Manila');
         
         if ($user->role !== 'Teacher' || $subjectOffering->teacher_id !== $user->id) {
             abort(403);
@@ -192,8 +194,8 @@ class AttendanceController extends Controller
         //     ],
         // ]);
 
-        $attendanceDate = now()->toDateString();
-        $attendanceTime = now()->format('H:i:s');
+        $attendanceDate = $now->toDateString();
+        $attendanceTime = $now->format('H:i:s');
 
         $attendance = Attendance::updateOrCreate([
             'user_id' => $validated['student_id'],
@@ -220,11 +222,19 @@ class AttendanceController extends Controller
     {
         $user = Auth::user();
 
-        $dayName = now()->setTimezone('Asia/Manila')->format('l');
-        $time = now()->setTimezone('Asia/Manila')->format('H:i');
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized',
+            ], 401);
+        }
 
-        $classroom = str_replace('CLASSROOM-', '', $request->room_code);
+        $now = now()->setTimezone('Asia/Manila');
+        $dayName = $now->format('l');
+        $attendanceDate = $now->toDateString();
+        $time = $now->format('H:i:s');
 
+        $classroom = str_replace('CLASSROOM-', '', $request->room_code ?? '');
         $classroomId = Classroom::where('room_number', $classroom)->value('id');
 
         if (!$classroomId) {
@@ -241,34 +251,14 @@ class AttendanceController extends Controller
             ->where('end_time', '>=', $time)
             ->where('remove', 0)
             ->where('status', 1)
-            ->with(['enrollments.enrollment.student'])
-            ->get()
-            ->flatMap(function ($offering) use ($user) {
-
-                return $offering->enrollments->map(function ($enrollmentSubject) use ($user) {
-
-                    $student = $enrollmentSubject->enrollment->student;
-
-                    if ($student->id !== $user->id) {
-                        return ['asdasdas' => $student,
-                                'offering' => $enrollmentSubject];
-                    }
-                    // $attendance = Attendance::where('user_id', $student->id)
-                    //     // ->where('subject_id', $subjectOffering->subject_id)
-                    //     ->whereDate('attendance_date', now()->toDateString())
-                    //     ->first();
-
-                    return ['student_id' => $student->id];
+            ->whereHas('enrollments', function ($query) use ($user) {
+                $query->whereHas('enrollment', function ($enrollmentQuery) use ($user) {
+                    $enrollmentQuery->where('user_id', $user->id)
+                        ->where('status', 'active');
                 });
-
-            });
-
-        return response()->json([
-            'subjectOffering' => $subjectOffering,
-            'classroomId' => $classroomId,
-            'now' => $dayName,
-            'time' => $time,
-        ]);
+            })
+            ->with(['subject', 'classroom'])
+            ->first();
 
         if (!$subjectOffering) {
             return response()->json([
@@ -277,43 +267,31 @@ class AttendanceController extends Controller
             ]);
         }
 
-        $user = Auth::user();
-
-        $enrolled = EnrollmentSubject::whereHas('enrollment', function ($query) use ($user) {
-            $query->where('user_id', $user->id)
-                ->where('status', 'active');
-        })
-        ->whereHas('subjectOffering', function ($query) use ($subjectOffering) {
-            $query->where('id', $subjectOffering->id);
-        })
-        ->exists();
-
-        if (!$enrolled) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Not enrolled for this subject',
-            ]);
-        }
-        
-
-        // OPTIONAL: prevent duplicate attendance
-        $exists = Attendance::where('user_id', $user->id)
-            ->where('classroom_id', $classroomId)
-            ->whereDate('attendance_date', now())
+        $existingAttendance = Attendance::where('user_id', $user->id)
+            ->where('subject_id', $subjectOffering->subject_id)
+            ->whereDate('attendance_date', $attendanceDate)
             ->first();
 
-        if ($exists) {
+        if ($existingAttendance) {
             return response()->json([
                 'status' => 'warning',
-                'message' => 'You already scanned attendance for this class.'
+                'message' => 'You already scanned attendance for this subject today.',
+                'record' => [
+                    'id' => $existingAttendance->id,
+                    'date' => $existingAttendance->attendance_date,
+                    'time' => $existingAttendance->time_in,
+                    'classroom' => $existingAttendance->classroom?->room_number ?? $subjectOffering->classroom?->room_number ?? 'N/A',
+                    'subject' => $existingAttendance->subject?->subject_name ?? $subjectOffering->subject?->subject_name ?? 'N/A',
+                    'status' => $existingAttendance->status,
+                ],
             ]);
         }
 
         $attendance = Attendance::create([
             'user_id' => $user->id,
             'subject_id' => $subjectOffering->subject_id,
-            'classroom_id' => $classroomId,
-            'attendance_date' => now()->toDateString(),
+            'classroom_id' => $subjectOffering->classroom_id,
+            'attendance_date' => $attendanceDate,
             'time_in' => $time,
             'status' => 'present',
         ]);
@@ -325,8 +303,8 @@ class AttendanceController extends Controller
                 'id' => $attendance->id,
                 'date' => $attendance->attendance_date,
                 'time' => $attendance->time_in,
-                'classroom' => $attendance->classroom?->room_number ?? 'N/A',
-                'subject' => $attendance->subject?->subject_name ?? 'N/A',
+                'classroom' => $attendance->classroom?->room_number ?? $subjectOffering->classroom?->room_number ?? 'N/A',
+                'subject' => $attendance->subject?->subject_name ?? $subjectOffering->subject?->subject_name ?? 'N/A',
                 'status' => $attendance->status,
             ],
         ]);
