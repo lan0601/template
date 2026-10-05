@@ -17,3 +17,4 @@ class PostsController extends Controller
         return Inertia::render('Posts/NewComponent');
     }
 }
+?>

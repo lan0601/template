@@ -24,6 +24,7 @@ class User extends Authenticatable
         'lname',
         'email',
         'phone',
+        'campusID',
         'password',
         'role',
         'userroleid',

@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PostsController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\Schedule2Controller;
+use App\Http\Controllers\CampusScheduleController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\SubjectController;
@@ -88,6 +89,15 @@ Route::post('/schedule2s/events', [Schedule2Controller::class, 'get'])
         ->middleware(['auth', 'verified'])
         ->name('schedule2.events');
 
+// Campus schedule routes ----------------------------------------
+Route::get('/campus-schedule', [CampusScheduleController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('campus-schedule');
+
+Route::post('/campus-schedule/events', [CampusScheduleController::class, 'get'])
+    ->middleware(['auth', 'verified'])
+    ->name('campus-schedule.events');
+
 // Attendance route ----------------------------------------------
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance');
@@ -131,6 +141,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/userrole', [UserroleController::class, 'index'])->name('userrole');
     Route::get('/userrole/create', [UserroleController::class, 'create'])->name('userrole.create');
     Route::post('/userrole', [UserroleController::class, 'store'])->name('userrole.store');
+    Route::post('/userrole/import-teachers', [UserroleController::class, 'importTeachers'])->name('userrole.import-teachers');
     Route::get('/userrole/access', [UserroleController::class, 'permissions'])->name('userrole.permissions');
     Route::post('/userrole/access', [UserroleController::class, 'savePermissions'])->name('userrole.permissions.store');
     Route::patch('/userrole/{user}', [UserroleController::class, 'update'])->name('userrole.update');

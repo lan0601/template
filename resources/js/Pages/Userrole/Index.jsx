@@ -2,53 +2,79 @@ import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
+import Modal from '@/Components/Modal';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, router } from '@inertiajs/react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
-const roleOptions = [
-    { value: 'Admin', label: 'Admin' },
-    { value: 'Student', label: 'Student' },
-    { value: 'Teacher', label: 'Teacher' },
-    { value: 'Guest', label: 'Guest' },
-];
+const roleOptions = ['Admin', 'Student', 'Teacher', 'Guest'];
 
 export default function Index({ users }) {
-    const [selectedRoles, setSelectedRoles] = useState(() =>
-        Object.fromEntries((users || []).map((user) => [user.id, user.role]))
-    );
+    const [editingUser, setEditingUser] = useState(null);
     const [savingId, setSavingId] = useState(null);
     const [showCreateForm, setShowCreateForm] = useState(false);
+    const [showImportModal, setShowImportModal] = useState(false);
+    const fileInput = useRef(null);
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         lname: '',
         email: '',
         roleid: '4',
         phone: '',
+        campusID: '',
         password: '',
         password_confirmation: '',
     });
+    const {
+        data: editData,
+        setData: setEditData,
+        patch: patchProfile,
+        processing: updatingProfile,
+        errors: editErrors,
+        reset: resetEdit,
+        clearErrors: clearEditErrors,
+    } = useForm({ name: '', lname: '', email: '', phone: '', campusID: '', role: 'Guest' });
+    const {
+        setData: setImportData,
+        post: postImport,
+        processing: importing,
+        errors: importErrors,
+        reset: resetImport,
+        clearErrors: clearImportErrors,
+    } = useForm({ file: null });
 
-    const handleRoleChange = (userId, role) => {
-        setSelectedRoles((current) => ({
-            ...current,
-            [userId]: role,
-        }));
+    const openEditModal = (user) => {
+        setEditingUser(user);
+        setEditData({
+            name: user.name || '',
+            lname: user.lname || '',
+            email: user.email || '',
+            phone: user.phone || '',
+            campusID: user.campusID || '',
+            role: roleOptions.find((role) => role.toLowerCase() === (user.role || '').toLowerCase()) || 'Guest',
+        });
+        clearEditErrors();
     };
 
-    const handleSave = (user) => {
-        setSavingId(user.id);
+    const closeEditModal = () => {
+        if (updatingProfile) return;
 
-        const nextRole = selectedRoles[user.id] || user.role;
+        setEditingUser(null);
+        resetEdit();
+        clearEditErrors();
+    };
 
-        router.patch(
-            route('userrole.update', user.id),
-            { role: nextRole },
-            {
-                preserveScroll: true,
-                onFinish: () => setSavingId(null),
-            }
-        );
+    const submitEdit = (event) => {
+        event.preventDefault();
+        if (!editingUser) return;
+
+        patchProfile(route('userrole.update', editingUser.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                setEditingUser(null);
+                resetEdit();
+            },
+        });
     };
 
     const handleDelete = (user) => {
@@ -75,6 +101,30 @@ export default function Index({ users }) {
         });
     };
 
+    const submitImport = (event) => {
+        event.preventDefault();
+
+        postImport(route('userrole.import-teachers'), {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                resetImport();
+                clearImportErrors();
+                setShowImportModal(false);
+                if (fileInput.current) fileInput.current.value = '';
+            },
+        });
+    };
+
+    const closeImportModal = () => {
+        if (importing) return;
+
+        setShowImportModal(false);
+        resetImport();
+        clearImportErrors();
+        if (fileInput.current) fileInput.current.value = '';
+    };
+
     return (
         <AuthenticatedLayout
             header={
@@ -87,15 +137,24 @@ export default function Index({ users }) {
 
             <div className="pb-12">
                 <div className="">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+                    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <h3 className="text-lg font-medium text-gray-900">Users list</h3>
-                        <button
-                            type="button"
-                            onClick={() => setShowCreateForm((current) => !current)}
-                            className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white text-center rounded hover:bg-blue-700"
-                        >
-                            {showCreateForm ? 'Cancel' : '+ New User'}
-                        </button>
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                            <button
+                                type="button"
+                                onClick={() => setShowImportModal(true)}
+                                className="w-full rounded bg-emerald-700 px-4 py-2 text-center text-white hover:bg-emerald-800 sm:w-auto"
+                            >
+                                Import Teachers
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setShowCreateForm((current) => !current)}
+                                className="w-full rounded bg-blue-600 px-4 py-2 text-center text-white hover:bg-blue-700 sm:w-auto"
+                            >
+                                {showCreateForm ? 'Cancel' : '+ New User'}
+                            </button>
+                        </div>
                     </div>
 
                     {showCreateForm && (
@@ -167,6 +226,17 @@ export default function Index({ users }) {
                                 </div>
 
                                 <div>
+                                    <InputLabel htmlFor="campusID" value="Campus ID" />
+                                    <TextInput
+                                        id="campusID"
+                                        value={data.campusID}
+                                        className="mt-1 block w-full"
+                                        onChange={(event) => setData('campusID', event.target.value)}
+                                    />
+                                    <InputError message={errors.campusID} className="mt-2" />
+                                </div>
+
+                                <div>
                                     <InputLabel htmlFor="password" value="Password" />
                                     <TextInput
                                         id="password"
@@ -214,7 +284,7 @@ export default function Index({ users }) {
                                             Phone Number
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                            Role
+                                            Campus ID
                                         </th>
                                         <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
                                             Action
@@ -241,26 +311,16 @@ export default function Index({ users }) {
                                                     {user.phone || '—'}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    <select
-                                                        value={selectedRoles[user.id] || user.role}
-                                                        onChange={(event) => handleRoleChange(user.id, event.target.value)}
-                                                        className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                                    >
-                                                        {roleOptions.map((role) => (
-                                                            <option key={role.value} value={role.value}>
-                                                                {role.label}
-                                                            </option>
-                                                        ))}
-                                                    </select>
+                                                    {user.campusID || '—'}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                                                     <button
                                                         type="button"
-                                                        onClick={() => handleSave(user)}
-                                                        disabled={savingId === user.id}
+                                                        onClick={() => openEditModal(user)}
+                                                        disabled={savingId === user.id || updatingProfile}
                                                         className="inline-flex items-center rounded bg-indigo-600 px-3 py-1.5 text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
                                                     >
-                                                        {savingId === user.id ? 'Saving...' : 'Save'}
+                                                        Edit
                                                     </button><button
                                                         type="button"
                                                         onClick={() => handleDelete(user)}
@@ -279,6 +339,165 @@ export default function Index({ users }) {
                     </div>
                 </div>
             </div>
+
+            <Modal show={showImportModal} onClose={closeImportModal} maxWidth="lg" closeable={!importing}>
+                <div className="p-6">
+                    <div className="flex items-start justify-between gap-4">
+                        <div>
+                            <h2 className="text-lg font-semibold text-gray-900">Import Teachers</h2>
+                            <p className="mt-1 text-sm text-gray-600">
+                                Upload a CSV with name and email columns. lname, phone, and campusID are optional.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={closeImportModal}
+                            disabled={importing}
+                            aria-label="Close import dialog"
+                            className="rounded px-2 py-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50"
+                        >
+                            Close
+                        </button>
+                    </div>
+
+                    <div className="mt-6 flex flex-col gap-5">
+                        <a
+                            href="/teacher-import-template.csv"
+                            download
+                            className="w-fit rounded border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        >
+                            Download CSV Template
+                        </a>
+
+                        <form onSubmit={submitImport} className="space-y-3">
+                            <InputLabel htmlFor="teacher-csv" value="Teacher CSV file" />
+                            <input
+                                ref={fileInput}
+                                id="teacher-csv"
+                                type="file"
+                                accept=".csv,text/csv"
+                                onChange={(event) => setImportData('file', event.target.files?.[0] || null)}
+                                className="block w-full text-sm text-gray-700 file:mr-3 file:rounded file:border-0 file:bg-gray-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-gray-700 hover:file:bg-gray-200"
+                                required
+                            />
+                            <InputError message={importErrors.file} />
+                            <div className="flex justify-end pt-2">
+                                <button
+                                    type="submit"
+                                    disabled={importing}
+                                    className="rounded bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {importing ? 'Importing...' : 'Upload and Import'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </Modal>
+
+            <Modal show={Boolean(editingUser)} onClose={closeEditModal} maxWidth="lg" closeable={!updatingProfile}>
+                <div className="p-6">
+                    <div className="flex items-start justify-between gap-4">
+                        <div>
+                            <h2 className="text-lg font-semibold text-gray-900">Edit User Profile</h2>
+                            <p className="mt-1 text-sm text-gray-600">Update the user’s contact and campus information.</p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={closeEditModal}
+                            disabled={updatingProfile}
+                            aria-label="Close profile editor"
+                            className="rounded px-2 py-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50"
+                        >
+                            Close
+                        </button>
+                    </div>
+
+                    <form onSubmit={submitEdit} className="mt-6 grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <InputLabel htmlFor="edit-name" value="First Name" />
+                            <TextInput
+                                id="edit-name"
+                                value={editData.name}
+                                className="mt-1 block w-full"
+                                onChange={(event) => setEditData('name', event.target.value)}
+                                required
+                            />
+                            <InputError message={editErrors.name} className="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="edit-lname" value="Last Name" />
+                            <TextInput
+                                id="edit-lname"
+                                value={editData.lname}
+                                className="mt-1 block w-full"
+                                onChange={(event) => setEditData('lname', event.target.value)}
+                            />
+                            <InputError message={editErrors.lname} className="mt-2" />
+                        </div>
+                        <div className="sm:col-span-2">
+                            <InputLabel htmlFor="edit-email" value="Email" />
+                            <TextInput
+                                id="edit-email"
+                                type="email"
+                                value={editData.email}
+                                className="mt-1 block w-full"
+                                onChange={(event) => setEditData('email', event.target.value)}
+                                required
+                            />
+                            <InputError message={editErrors.email} className="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="edit-phone" value="Phone" />
+                            <TextInput
+                                id="edit-phone"
+                                type="tel"
+                                value={editData.phone}
+                                className="mt-1 block w-full"
+                                onChange={(event) => setEditData('phone', event.target.value)}
+                            />
+                            <InputError message={editErrors.phone} className="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="edit-campusID" value="Campus ID" />
+                            <TextInput
+                                id="edit-campusID"
+                                value={editData.campusID}
+                                className="mt-1 block w-full"
+                                onChange={(event) => setEditData('campusID', event.target.value)}
+                            />
+                            <InputError message={editErrors.campusID} className="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="edit-role" value="Role" />
+                            <select
+                                id="edit-role"
+                                value={editData.role}
+                                onChange={(event) => setEditData('role', event.target.value)}
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            >
+                                {roleOptions.map((role) => (
+                                    <option key={role} value={role}>{role}</option>
+                                ))}
+                            </select>
+                            <InputError message={editErrors.role} className="mt-2" />
+                        </div>
+                        <div className="flex justify-end gap-3 sm:col-span-2">
+                            <button
+                                type="button"
+                                onClick={closeEditModal}
+                                disabled={updatingProfile}
+                                className="rounded border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <PrimaryButton disabled={updatingProfile}>
+                                {updatingProfile ? 'Saving...' : 'Save Changes'}
+                            </PrimaryButton>
+                        </div>
+                    </form>
+                </div>
+            </Modal>
         </AuthenticatedLayout>
     );
 }

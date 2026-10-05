@@ -112,6 +112,22 @@ return [
             'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        'campus' => [
+            'driver' => 'mysql',
+            'host' => env('CAMPUS_DB_HOST'),
+            'port' => env('CAMPUS_DB_PORT', 3306),
+            'database' => env('CAMPUS_DB_DATABASE'),
+            'username' => env('CAMPUS_DB_USERNAME'),
+            'password' => env('CAMPUS_DB_PASSWORD'),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+        ],
+
     ],
 
     /*

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -27,7 +28,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            'email' => ['required', 'string'],
             'password' => ['required', 'string'],
         ];
     }
@@ -41,7 +42,25 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        $identifier = trim((string) $this->input('email', ''));
+        $password = $this->input('password');
+
+        $credentials = ['password' => $password];
+        $user = User::query()
+            ->where('remove', 0)
+            ->where(function ($query) use ($identifier) {
+                $query->where('email', $identifier)
+                    ->orWhereRaw('LOWER(campusID) = ?', [strtolower($identifier)]);
+            })
+            ->first();
+
+        if ($user) {
+            $credentials['email'] = $user->email;
+        } else {
+            $credentials['email'] = $identifier;
+        }
+
+        if (! Auth::attempt($credentials, $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([

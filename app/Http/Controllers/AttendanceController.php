@@ -78,10 +78,16 @@ class AttendanceController extends Controller
         }
 
         if ($userRole === 'Teacher') {
+            $now = now()->setTimezone('Asia/Manila');
+
             $teacherSubjects = SubjectOffering::query()
                 ->with(['subject', 'classroom'])
                 ->where('teacher_id', $user->id)
                 ->where('remove', 0)
+                ->where('status', 1)
+                ->where('day', $now->format('l'))
+                ->where('start_time', '<=', $now->format('H:i:s'))
+                ->where('end_time', '>=', $now->format('H:i:s'))
                 ->orderBy('school_year')
                 ->orderBy('semester')
                 ->get()
