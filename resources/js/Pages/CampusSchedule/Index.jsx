@@ -12,12 +12,12 @@ export default function CampusSchedule() {
     const { auth } = usePage().props;
 
     const fetchEvents = (fetchInfo, successCallback, failureCallback) => {
-        axios.post(route('campus-schedule.events'))
+        axios.post(route('cschedule.events'))
             .then((response) => {
                 successCallback(response.data);
             })
             .catch((error) => {
-                console.error('Error fetching campus schedule events:', error);
+                console.error(error);
                 failureCallback(error);
                 console.log(error);
                 Swal.fire({
@@ -53,10 +53,10 @@ export default function CampusSchedule() {
 
     return (
         <AuthenticatedLayout
-            header={<h2 className="font-semibold text-xl text-gray-800 leading-tight">Campus Schedule</h2>}
+            header={<h2 className="font-semibold text-xl text-gray-800 leading-tight">C Schedule</h2>}
             user={auth.user}
         >
-            <Head title="Campus Schedule" />
+            <Head title="C Schedule" />
 
             <div className="py-6">
                 <div className="max-w-full mx-auto sm:px-6 lg:px-8">

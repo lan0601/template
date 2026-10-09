@@ -98,10 +98,20 @@ Route::post('/campus-schedule/events', [CampusScheduleController::class, 'get'])
     ->middleware(['auth', 'verified'])
     ->name('campus-schedule.events');
 
+// External campus schedules ------------------------------------
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/cschedule', [CampusScheduleController::class, 'index'])->name('cschedule');
+    Route::post('/cschedule/events', [CampusScheduleController::class, 'get'])->name('cschedule.events');
+    // Route::post('/cschedule/subject/{subjectOffering}/mark', [CampusScheduleController::class, 'markStudentAttendance'])->name('cschedule.subject.mark');
+});
+
 // Attendance route ----------------------------------------------
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance');
     Route::post('/attendance/scan', [AttendanceController::class, 'scan'])->name('attendance.scan');
+    Route::get('/attendance/external-subject/{subjectCode}/students', [AttendanceController::class, 'externalSubjectStudents'])->name('attendance.external-subject.students');
+    Route::post('/attendance/external-subject/{subjectCode}/mark', [AttendanceController::class, 'markExternalStudentAttendance'])->name('attendance.external-subject.mark');
+    Route::get('/attendance/subject/{subjectOffering}/qr', [AttendanceController::class, 'subjectQr'])->name('attendance.subject.qr');
     Route::get('/attendance/subject/{subjectOffering}/students', [AttendanceController::class, 'subjectStudents'])->name('attendance.subject.students');
     Route::post('/attendance/subject/{subjectOffering}/mark', [AttendanceController::class, 'markStudentAttendance'])->name('attendance.subject.mark');
 

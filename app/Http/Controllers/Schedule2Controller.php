@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Enrollment; // Added for fetching student enrollments
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth; // Added for authenticated user
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
@@ -14,6 +13,7 @@ use App\Models\SubjectOffering;
 use App\Models\User;
 use App\Mail\ScheduleStatusNotification;
 use Inertia\Inertia;
+use Illuminate\Http\Request;
 
 class Schedule2Controller extends Controller
 {
@@ -91,7 +91,6 @@ class Schedule2Controller extends Controller
 
     public function store(Request $request)
     {
-        // dd($request->all());
 
         $request->validate([
             'title' => 'required',

@@ -15,10 +15,42 @@ class CampusScheduleController extends Controller
 
     public function get(Request $request)
     {
+        $user = $request->user();
+        $campusId = trim((string) $user->campusID);
+
+        if (! filled($campusId)) {
+            return response()->json([]);
+        }
+
+        $query = ExternalSchedule::query()->where('is_active', true);
+
+        if ($user->role === 'Teacher') {
+            $query->select([
+                'subject_code',
+                'description',
+                'days_code',
+                'start_time',
+                'end_time',
+                'block_section',
+                'class_room',
+                'employee_last_name',
+                'employee_first_name',
+                'employee_middle_name',
+                'semester_code',
+                'school_year',
+            ])
+                ->where('employee_no', $campusId)
+                ->where('school_year', (string) now()->year)
+                ->distinct();
+        } elseif ($user->role === 'Student') {
+            $query->where('student_no', $campusId);
+        } else {
+            return response()->json([]);
+        }
+
+        $schedules = $query->get();
+
         $events = [];
-        $schedules = ExternalSchedule::query()
-            ->where('is_active', true)
-            ->get();
 
         foreach ($schedules as $schedule) {
             $days = $this->parseDays($schedule->days_code);
@@ -54,11 +86,11 @@ class CampusScheduleController extends Controller
 
     private function parseDays(?string $daysCode): array
     {
-        if ($daysCode === null || trim((string) $daysCode) === '') {
+        if ($daysCode === null || trim($daysCode) === '') {
             return [];
         }
 
-        $clean = preg_replace('/[^A-Z]/', '', strtoupper((string) $daysCode));
+        $clean = preg_replace('/[^A-Z]/', '', strtoupper($daysCode));
 
         if ($clean === '' || $clean === null) {
             return [];

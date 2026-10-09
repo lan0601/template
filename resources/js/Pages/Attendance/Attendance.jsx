@@ -22,12 +22,13 @@ export default function Dashboard() {
     const [subjectStudents, setSubjectStudents] = useState([]);
     const [showSubjectModal, setShowSubjectModal] = useState(false);
     const [loadingSubjectStudents, setLoadingSubjectStudents] = useState(false);
-    const [markingStudentId, setMarkingStudentId] = useState(null);
+    const [updatingCampusId, setUpdatingCampusId] = useState(null);
+    const [qrSubject, setQrSubject] = useState(null);
 
     const handleScan = async (roomCode) => {
         try {
             const res = await axios.post(route("attendance.scan"), {
-                room_code: roomCode,
+                qr_code: roomCode,
             });
             console.log(res.data);
 
@@ -96,7 +97,7 @@ export default function Dashboard() {
         setLoadingSubjectStudents(true);
 
         try {
-            const response = await axios.get(route('attendance.subject.students', subject.id));
+            const response = await axios.get(route('attendance.external-subject.students', subject.subject_code));
             setSubjectStudents(response.data.students || []);
             console.log(response.data)
         } catch (error) {
@@ -118,44 +119,34 @@ export default function Dashboard() {
         setShowSubjectModal(false);
     };
 
-    const markAttendance = async (studentId, status) => {
-        if (!selectedSubject) {
-            return;
-        }
+    const markExternalAttendance = async (student, status) => {
+        if (!selectedSubject || !student.id) return;
 
-        setMarkingStudentId(studentId);
+        setUpdatingCampusId(student.campus_id);
 
         try {
-            const response = await axios.post(route('attendance.subject.mark', selectedSubject.id), {
-                student_id: studentId,
-                status,
-            });
+            const response = await axios.post(
+                route('attendance.external-subject.mark', selectedSubject.subject_code),
+                { campus_id: student.campus_id, status }
+            );
 
-            if (response.data.status === 'success') {
-            console.log(response.data)
-
-                setSubjectStudents((prev) =>
-                    prev.map((student) =>
-                        student.id === studentId
-                            ? { ...student, status: response.data.attendance.status }
-                            : student
-                    )
-                );
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Updated',
-                    text: `Marked student as ${status}.`,
-                });
-            }
+            setSubjectStudents((currentStudents) => currentStudents.map((currentStudent) => (
+                currentStudent.campus_id === student.campus_id
+                    ? {
+                        ...currentStudent,
+                        status: response.data.attendance.status,
+                        time: response.data.attendance.time,
+                    }
+                    : currentStudent
+            )));
         } catch (error) {
-            console.error(error);
             Swal.fire({
                 icon: 'error',
                 title: 'Unable to update attendance',
-                text: 'Please try again.',
+                text: error.response?.data?.message || 'Please try again.',
             });
         } finally {
-            setMarkingStudentId(null);
+            setUpdatingCampusId(null);
         }
     };
 
@@ -247,7 +238,7 @@ export default function Dashboard() {
                                                                 onClick={() => openSubjectModal(subject)}
                                                                 className="rounded bg-blue-600 px-3 py-1 text-white hover:bg-blue-700"
                                                             >
-                                                                View
+                                                                View Attendance
                                                             </button>
                                                         </td>
                                                     </tr>
@@ -341,7 +332,7 @@ export default function Dashboard() {
                 <div className="p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h2 className="text-lg font-semibold text-gray-900">Subject Details</h2>
+                            <h2 className="text-lg font-semibold text-gray-900">Subject Attendance</h2>
                             {selectedSubject && (
                                 <p className="mt-1 text-sm text-gray-500">
                                     {selectedSubject.subject_name} • {selectedSubject.subject_code}
@@ -372,33 +363,33 @@ export default function Dashboard() {
                                 <div>
                                     <span className="font-semibold">Semester:</span> {selectedSubject.semester}
                                 </div>
-                                <div>
-                                    <span className="font-semibold">Status:</span> {selectedSubject.status}
-                                </div>
                             </div>
 
                             <div className="mt-6">
-                                <h3 className="text-base font-semibold text-gray-900">Enrolled Students</h3>
+                                <h3 className="text-base font-semibold text-gray-900">Students</h3>
                                 <div className="mt-3 overflow-x-auto">
                                     <table className="min-w-full divide-y divide-gray-200">
                                         <thead className="bg-gray-50">
                                             <tr>
+                                                <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Campus ID</th>
                                                 <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Student</th>
                                                 <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Email</th>
                                                 <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Attendance</th>
+                                                <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Time</th>
                                                 <th className="px-3 py-2 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Action</th>
                                             </tr>
                                         </thead>
                                         <tbody className="bg-white divide-y divide-gray-200">
                                             {loadingSubjectStudents ? (
                                                 <tr>
-                                                    <td colSpan="4" className="px-3 py-6 text-center text-sm text-gray-500">
+                                                    <td colSpan="6" className="px-3 py-6 text-center text-sm text-gray-500">
                                                         Loading students...
                                                     </td>
                                                 </tr>
                                             ) : subjectStudents.length > 0 ? (
                                                 subjectStudents.map((student) => (
-                                                    <tr key={student.id}>
+                                                    <tr key={student.campus_id}>
+                                                        <td className="px-3 py-3 text-sm text-gray-700">{student.campus_id}</td>
                                                         <td className="px-3 py-3 text-sm text-gray-700">{student.name}</td>
                                                         <td className="px-3 py-3 text-sm text-gray-500">{student.email}</td>
                                                         <td className="px-3 py-3 text-sm text-gray-700">
@@ -406,23 +397,24 @@ export default function Dashboard() {
                                                             {student.status}
                                                         </span>
                                                     </td>
-                                                        <td className="px-3 py-3 text-sm text-gray-700 text-right">
-                                                            <div className="flex flex-wrap gap-2 justify-end">
+                                                        <td className="px-3 py-3 text-sm text-gray-500">{student.time || 'N/A'}</td>
+                                                        <td className="px-3 py-3 text-right">
+                                                            <div className="inline-flex gap-2">
                                                                 <button
                                                                     type="button"
-                                                                    onClick={() => markAttendance(student.id, 'present')}
-                                                                    disabled={markingStudentId === student.id}
-                                                                    className="rounded bg-green-600 px-3 py-1 text-white hover:bg-green-700 disabled:opacity-50"
+                                                                    onClick={() => markExternalAttendance(student, 'present')}
+                                                                    disabled={!student.id || updatingCampusId === student.campus_id}
+                                                                    className="rounded bg-green-700 px-3 py-1 text-xs font-medium text-white hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-50"
                                                                 >
-                                                                    P
+                                                                    Present
                                                                 </button>
                                                                 <button
                                                                     type="button"
-                                                                    onClick={() => markAttendance(student.id, 'absent')}
-                                                                    disabled={markingStudentId === student.id}
-                                                                    className="rounded bg-red-600 px-3 py-1 text-white hover:bg-red-700 disabled:opacity-50"
+                                                                    onClick={() => markExternalAttendance(student, 'absent')}
+                                                                    disabled={!student.id || updatingCampusId === student.campus_id}
+                                                                    className="rounded bg-red-700 px-3 py-1 text-xs font-medium text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-50"
                                                                 >
-                                                                    A
+                                                                    Absent
                                                                 </button>
                                                             </div>
                                                         </td>
@@ -430,8 +422,8 @@ export default function Dashboard() {
                                                 ))
                                             ) : (
                                                 <tr>
-                                                    <td colSpan="4" className="px-3 py-6 text-center text-sm text-gray-500">
-                                                        No Enrolled Student in this subject
+                                                    <td colSpan="6" className="px-3 py-6 text-center text-sm text-gray-500">
+                                                        No students found for this subject.
                                                     </td>
                                                 </tr>
                                             )}
@@ -454,6 +446,7 @@ export default function Dashboard() {
                     </div>
                 </div>
             </Modal>
+
         </AuthenticatedLayout>
     );
 }

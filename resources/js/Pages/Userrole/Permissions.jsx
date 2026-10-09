@@ -11,10 +11,14 @@ export default function Permissions({ roles, pages, permissions }) {
         dashboard: 'Dashboard',
         attendance: 'Attendance',
         enroll: 'Enroll',
-        schedule: 'Schedule',
-        classroom: 'Classroom',
-        subject: 'Subject',
-        users: 'Users',
+        schedule2: 'Schedule',
+        cschedule: 'C Schedule',
+        userrole: 'Users',
+        subject: 'Subjects',
+        section: 'Sections',
+        classroom: 'Rooms',
+        subjectoffering: 'Subject Offerings',
+        enrollmentsubject: 'Enrollment Subject',
     }), []);
 
     const handleToggle = (role, page) => {

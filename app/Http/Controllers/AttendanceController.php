@@ -7,12 +7,15 @@ use Illuminate\Support\Facades\Http;
 use App\Models\Schedule2;
 use App\Models\Classroom;
 use App\Models\Attendance;
+use App\Models\ExternalSchedule;
 use App\Models\EnrollmentSubject;
 use App\Models\Subject;
 use App\Models\SubjectOffering;
+use App\Models\User;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class AttendanceController extends Controller
 {
@@ -78,31 +81,29 @@ class AttendanceController extends Controller
         }
 
         if ($userRole === 'Teacher') {
-            $now = now()->setTimezone('Asia/Manila');
-
-            $teacherSubjects = SubjectOffering::query()
-                ->with(['subject', 'classroom'])
-                ->where('teacher_id', $user->id)
-                ->where('remove', 0)
-                ->where('status', 1)
-                ->where('day', $now->format('l'))
-                ->where('start_time', '<=', $now->format('H:i:s'))
-                ->where('end_time', '>=', $now->format('H:i:s'))
-                ->orderBy('school_year')
-                ->orderBy('semester')
+            $teacherSubjects = ExternalSchedule::query()
+                ->where('is_active', true)
+                ->where('employee_no', trim((string) $user->campusID))
+                ->where('school_year', (string) now()->year)
+                ->whereNotNull('subject_code')
+                ->orderBy('subject_code')
                 ->get()
+                ->groupBy('subject_code')
                 ->map(function ($offering) {
+                    $schedule = $offering->first();
+
                     return [
-                        'id' => $offering->id,
-                        'subject_name' => $offering->subject?->subject_name ?? 'N/A',
-                        'subject_code' => $offering->subject?->subject_code ?? 'N/A',
-                        'classroom' => $offering->classroom?->room_number ?? 'N/A',
-                        'section' => $offering->section?? 'N/A',
-                        'school_year' => $offering->school_year,
-                        'semester' => $offering->semester,
-                        'status' => $offering->status,
+                        'id' => (string) $schedule->subject_code,
+                        'subject_name' => $schedule->description ?: $schedule->subject_code,
+                        'subject_code' => $schedule->subject_code,
+                        'classroom' => $offering->pluck('class_room')->filter()->unique()->implode(', ') ?: 'N/A',
+                        'section' => $offering->pluck('block_section')->filter()->unique()->implode(', ') ?: 'N/A',
+                        'school_year' => $schedule->school_year,
+                        'semester' => $schedule->semester_code ?: 'N/A',
+                        'status' => 'Active',
                     ];
-                });
+                })
+                ->values();
 
             return Inertia::render('Attendance/Attendance', [
                 'attendanceRecords' => [],
@@ -130,6 +131,110 @@ class AttendanceController extends Controller
         return Inertia::render('Attendance/Attendance', [
             'attendanceRecords' => $attendanceRecords,
             'teacherSubjects' => [],
+        ]);
+    }
+
+    public function externalSubjectStudents(Request $request, string $subjectCode)
+    {
+        $teacher = $request->user();
+
+        if ($teacher->role !== 'Teacher' || ! filled($teacher->campusID)) {
+            abort(403);
+        }
+
+        $studentNumbers = ExternalSchedule::query()
+            ->where('is_active', true)
+            ->where('employee_no', trim((string) $teacher->campusID))
+            ->where('school_year', (string) now()->year)
+            ->where('subject_code', $subjectCode)
+            ->whereNotNull('student_no')
+            ->distinct()
+            ->pluck('student_no');
+
+        $usersByCampusId = User::query()
+            ->whereIn('campusID', $studentNumbers)
+            ->get(['id', 'name', 'lname', 'email', 'campusID'])
+            ->keyBy('campusID');
+
+        $attendanceByCampusId = Attendance::query()
+            ->where('subject_code', $subjectCode)
+            ->whereDate('attendance_date', now()->toDateString())
+            ->whereIn('campus_id', $studentNumbers)
+            ->get()
+            ->keyBy('campus_id');
+
+        $students = $studentNumbers->map(function ($campusId) use ($usersByCampusId, $attendanceByCampusId) {
+            $student = $usersByCampusId->get($campusId);
+            $attendance = $attendanceByCampusId->get($campusId);
+
+            return [
+                'id' => $student?->id,
+                'campus_id' => $campusId,
+                'name' => $student ? trim($student->name . ' ' . $student->lname) : 'No linked student account',
+                'email' => $student?->email ?? 'N/A',
+                'status' => $attendance?->status ?? 'unmarked',
+                'time' => $attendance?->time_in,
+            ];
+        })->values();
+
+        return response()->json(['students' => $students]);
+    }
+
+    public function markExternalStudentAttendance(Request $request, string $subjectCode)
+    {
+        $teacher = $request->user();
+
+        if ($teacher->role !== 'Teacher' || ! filled($teacher->campusID)) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'campus_id' => ['required', 'string'],
+            'status' => ['required', 'in:present,absent'],
+        ]);
+
+        $schedule = ExternalSchedule::query()
+            ->where('is_active', true)
+            ->where('employee_no', trim((string) $teacher->campusID))
+            ->where('school_year', (string) now()->year)
+            ->where('subject_code', $subjectCode)
+            ->where('student_no', $validated['campus_id'])
+            ->first();
+
+        if (! $schedule) {
+            abort(403);
+        }
+
+        $student = User::query()->where('campusID', $validated['campus_id'])->first();
+        $subject = Subject::query()->where('subject_code', $subjectCode)->first();
+        $classroom = Classroom::query()->where('room_number', $schedule->class_room)->first();
+
+        if (! $student || ! $subject || ! $classroom) {
+            return response()->json([
+                'message' => 'The student, subject, or classroom is not linked to the attendance records.',
+            ], 422);
+        }
+
+        $now = now()->setTimezone('Asia/Manila');
+        $attendance = Attendance::updateOrCreate([
+            'user_id' => $student->id,
+            'subject_id' => $subject->id,
+            'attendance_date' => $now->toDateString(),
+        ], [
+            'campus_id' => $student->campusID,
+            'subject_code' => $subjectCode,
+            'classroom_id' => $classroom->id,
+            'time_in' => $validated['status'] === 'present' ? $now->format('H:i:s') : null,
+            'status' => $validated['status'],
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'attendance' => [
+                'campus_id' => $attendance->campus_id,
+                'status' => $attendance->status,
+                'time' => $attendance->time_in,
+            ],
         ]);
     }
 
@@ -208,6 +313,8 @@ class AttendanceController extends Controller
             'subject_id' => $subjectOffering->subject_id,
             'attendance_date' => $attendanceDate,
         ], [
+            'campus_id' => User::whereKey($validated['student_id'])->value('campusID'),
+            'subject_code' => $subjectOffering->subject?->subject_code,
             'classroom_id' => $subjectOffering->classroom_id,
             'status' => $validated['status'],
             'time_in' => $attendanceTime,
@@ -240,18 +347,8 @@ class AttendanceController extends Controller
         $attendanceDate = $now->toDateString();
         $time = $now->format('H:i:s');
 
-        $classroom = str_replace('CLASSROOM-', '', $request->room_code ?? '');
-        $classroomId = Classroom::where('room_number', $classroom)->value('id');
-
-        if (!$classroomId) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Invalid classroom.'
-            ]);
-        }
-
-        $subjectOffering = SubjectOffering::query()
-            ->where('classroom_id', $classroomId)
+        $qrCode = (string) $request->input('qr_code', $request->input('room_code', ''));
+        $subjectOfferingQuery = SubjectOffering::query()
             ->where('day', $dayName)
             ->where('start_time', '<=', $time)
             ->where('end_time', '>=', $time)
@@ -263,8 +360,25 @@ class AttendanceController extends Controller
                         ->where('status', 'active');
                 });
             })
-            ->with(['subject', 'classroom'])
-            ->first();
+            ->with(['subject', 'classroom']);
+
+        if (preg_match('/^ATTENDANCE-OFFERING-(\d+)$/', $qrCode, $matches)) {
+            $subjectOffering = $subjectOfferingQuery->whereKey($matches[1])->first();
+        } else {
+            $classroom = str_replace('CLASSROOM-', '', $qrCode);
+            $classroomId = Classroom::where('room_number', $classroom)->value('id');
+
+            if (!$classroomId) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Invalid classroom or attendance QR code.'
+                ]);
+            }
+
+            $subjectOffering = $subjectOfferingQuery
+                ->where('classroom_id', $classroomId)
+                ->first();
+        }
 
         if (!$subjectOffering) {
             return response()->json([
@@ -295,7 +409,9 @@ class AttendanceController extends Controller
 
         $attendance = Attendance::create([
             'user_id' => $user->id,
+            'campus_id' => $user->campusID,
             'subject_id' => $subjectOffering->subject_id,
+            'subject_code' => $subjectOffering->subject?->subject_code,
             'classroom_id' => $subjectOffering->classroom_id,
             'attendance_date' => $attendanceDate,
             'time_in' => $time,
@@ -314,6 +430,20 @@ class AttendanceController extends Controller
                 'status' => $attendance->status,
             ],
         ]);
+    }
+
+    public function subjectQr(SubjectOffering $subjectOffering)
+    {
+        $user = Auth::user();
+
+        if ($user->role !== 'Teacher' || $subjectOffering->teacher_id !== $user->id) {
+            abort(403);
+        }
+
+        $payload = 'ATTENDANCE-OFFERING-' . $subjectOffering->id;
+
+        return response(QrCode::format('svg')->size(320)->margin(2)->generate($payload))
+            ->header('Content-Type', 'image/svg+xml');
     }
 
 }

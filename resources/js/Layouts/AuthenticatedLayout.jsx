@@ -10,7 +10,7 @@ export default function AuthenticatedLayout({ header, children }) {
     const { user, permissions = {} } = usePage().props.auth;
     const currentRoute = route().current();
 
-    const isDashboardActive = route().current('dashboard') || route().current('attendance') || route().current('schedule2') || route().current('campus-schedule');
+    const isDashboardActive = route().current('dashboard') || route().current('attendance') || route().current('schedule2') || route().current('campus-schedule') || route().current('cschedule');
     const isMasterActive = route().current('userrole*') || route().current('subject') || route().current('section*') || route().current('classroom*');
     const isAcademicActive = route().current('subjectoffering*') || route().current('enrollmentsubject*');
     const isTransactionsActive = route().current('enroll*');
@@ -42,12 +42,11 @@ export default function AuthenticatedLayout({ header, children }) {
             title: 'Dashboard',
             isOpen: openDashboard,
             setIsOpen: setOpenDashboard,
-            groupPermission: 'dashboard',
             links: [
-                { name: 'Dashboard', routeName: 'dashboard', active: 'dashboard' },
-                { name: 'Attendance', routeName: 'attendance', active: 'attendance' },
-                { name: 'Schedule', routeName: 'schedule2', active: 'schedule2' },
-                { name: 'Campus Schedule', routeName: 'campus-schedule', active: 'campus-schedule' },
+                { name: 'Dashboard', routeName: 'dashboard', active: 'dashboard', permission: 'dashboard' },
+                { name: 'Attendance', routeName: 'attendance', active: 'attendance', permission: 'attendance' },
+                { name: 'Schedule', routeName: 'schedule2', active: 'schedule2', permission: 'schedule2' },
+                { name: 'C Schedule', routeName: 'cschedule', active: 'cschedule', permission: 'cschedule' },
             ],
         },
         {
