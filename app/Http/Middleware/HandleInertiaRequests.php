@@ -38,6 +38,10 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $user,
                 'permissions' => $rolePermissions,
+                'impersonating' => $request->session()->has('impersonator_id'),
+                'impersonator' => $request->session()->has('impersonator_id')
+                    ? \App\Models\User::query()->find($request->session()->get('impersonator_id'))?->only(['id', 'name', 'email'])
+                    : null,
             ],
         ];
     }

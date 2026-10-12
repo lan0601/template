@@ -4,16 +4,19 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import Modal from '@/Components/Modal';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm, router } from '@inertiajs/react';
+import { Head, useForm, router, usePage } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 
 const roleOptions = ['Admin', 'Student', 'Teacher', 'Guest'];
 
 export default function Index({ users }) {
+    const { auth } = usePage().props;
     const [editingUser, setEditingUser] = useState(null);
     const [savingId, setSavingId] = useState(null);
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [showImportModal, setShowImportModal] = useState(false);
+    const [importType, setImportType] = useState('teachers');
+    const [searchQuery, setSearchQuery] = useState('');
     const fileInput = useRef(null);
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
@@ -89,6 +92,13 @@ export default function Index({ users }) {
         );
     };
 
+    const handleImpersonate = (user) => {
+        setSavingId(user.id);
+        router.post(route('userrole.impersonate', user.id), {}, {
+            onFinish: () => setSavingId(null),
+        });
+    };
+
     const submitCreate = (event) => {
         event.preventDefault();
 
@@ -104,7 +114,7 @@ export default function Index({ users }) {
     const submitImport = (event) => {
         event.preventDefault();
 
-        postImport(route('userrole.import-teachers'), {
+        postImport(route(`userrole.import-${importType}`), {
             forceFormData: true,
             preserveScroll: true,
             onSuccess: () => {
@@ -125,6 +135,21 @@ export default function Index({ users }) {
         if (fileInput.current) fileInput.current.value = '';
     };
 
+    const openImportModal = (type) => {
+        setImportType(type);
+        setShowImportModal(true);
+    };
+
+    const normalizedQuery = searchQuery.trim().toLocaleLowerCase();
+    const filteredUsers = users.filter((user) => [
+        user.name,
+        user.lname,
+        user.email,
+        user.phone,
+        user.campusID,
+        user.role,
+    ].some((value) => String(value || '').toLocaleLowerCase().includes(normalizedQuery)));
+
     return (
         <AuthenticatedLayout
             header={
@@ -137,23 +162,56 @@ export default function Index({ users }) {
 
             <div className="pb-12">
                 <div className="">
-                    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="mb-6 flex flex-col gap-3">
                         <h3 className="text-lg font-medium text-gray-900">Users list</h3>
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                            <button
-                                type="button"
-                                onClick={() => setShowImportModal(true)}
-                                className="w-full rounded bg-emerald-700 px-4 py-2 text-center text-white hover:bg-emerald-800 sm:w-auto"
-                            >
-                                Import Teachers
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setShowCreateForm((current) => !current)}
-                                className="w-full rounded bg-blue-600 px-4 py-2 text-center text-white hover:bg-blue-700 sm:w-auto"
-                            >
-                                {showCreateForm ? 'Cancel' : '+ New User'}
-                            </button>
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                                {auth.user?.role?.toLowerCase() === 'admin' && (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={() => openImportModal('teachers')}
+                                            className="w-full rounded bg-emerald-700 px-4 py-2 text-center text-white hover:bg-emerald-800 sm:w-auto"
+                                        >
+                                            Import Teachers
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => openImportModal('students')}
+                                            className="w-full rounded bg-teal-700 px-4 py-2 text-center text-white hover:bg-teal-800 sm:w-auto"
+                                        >
+                                            Import Students
+                                        </button>
+                                    </>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => setShowCreateForm((current) => !current)}
+                                    className="w-full rounded bg-blue-600 px-4 py-2 text-center text-white hover:bg-blue-700 sm:w-auto"
+                                >
+                                    {showCreateForm ? 'Cancel' : '+ New User'}
+                                </button>
+                            </div>
+                            <div className="relative w-full sm:w-72">
+                                <input
+                                    type="search"
+                                    value={searchQuery}
+                                    onChange={(event) => setSearchQuery(event.target.value)}
+                                    placeholder="Search users..."
+                                    aria-label="Search users by name, email, phone, campus ID, or role"
+                                    className="w-full rounded border-gray-300 pr-9 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                />
+                                {searchQuery && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setSearchQuery('')}
+                                        aria-label="Clear user search"
+                                        className="absolute inset-y-0 right-0 px-3 text-gray-500 hover:text-gray-800"
+                                    >
+                                        ×
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
 
@@ -286,23 +344,27 @@ export default function Index({ users }) {
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                                             Campus ID
                                         </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                            Role
+                                        </th>
                                         <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
                                             Action
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200 bg-white">
-                                    {users.length === 0 ? (
+                                            {filteredUsers.length === 0 ? (
                                         <tr>
-                                            <td colSpan="5" className="px-6 py-8 text-center text-sm text-gray-500">
-                                                No users found.
+                                            <td colSpan="6" className="px-6 py-8 text-center text-sm text-gray-500">
+                                                {normalizedQuery ? 'No users match your search.' : 'No users found.'}
                                             </td>
                                         </tr>
                                     ) : (
-                                        users.map((user) => (
+                                        filteredUsers.map((user) => (
                                             <tr key={user.id}>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                     {user.name}
+                                                    {user.lname ? ` ${user.lname}` : ''}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                     {user.email}
@@ -313,7 +375,20 @@ export default function Index({ users }) {
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                     {user.campusID || '—'}
                                                 </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm capitalize text-gray-900">
+                                                    {user.role || '—'}
+                                                </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                                                    {auth.user?.role?.toLowerCase() === 'admin' && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleImpersonate(user)}
+                                                            disabled={savingId === user.id}
+                                                            className="inline-flex items-center rounded bg-amber-600 px-3 py-1.5 text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                                        >
+                                                            {savingId === user.id ? 'Logging in...' : 'Login as'}
+                                                        </button>
+                                                    )}
                                                     <button
                                                         type="button"
                                                         onClick={() => openEditModal(user)}
@@ -344,9 +419,11 @@ export default function Index({ users }) {
                 <div className="p-6">
                     <div className="flex items-start justify-between gap-4">
                         <div>
-                            <h2 className="text-lg font-semibold text-gray-900">Import Teachers</h2>
+                            <h2 className="text-lg font-semibold text-gray-900">
+                                Import {importType === 'teachers' ? 'Teachers' : 'Students'}
+                            </h2>
                             <p className="mt-1 text-sm text-gray-600">
-                                Upload a CSV with name and email columns. lname, phone, and campusID are optional.
+                                Upload a CSV with name and email columns. Last name, phone, and campus ID are optional.
                             </p>
                         </div>
                         <button
@@ -362,7 +439,7 @@ export default function Index({ users }) {
 
                     <div className="mt-6 flex flex-col gap-5">
                         <a
-                            href="/teacher-import-template.csv"
+                            href={`/${importType === 'teachers' ? 'teacher' : 'student'}-import-template.csv`}
                             download
                             className="w-fit rounded border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                         >
@@ -370,10 +447,10 @@ export default function Index({ users }) {
                         </a>
 
                         <form onSubmit={submitImport} className="space-y-3">
-                            <InputLabel htmlFor="teacher-csv" value="Teacher CSV file" />
+                            <InputLabel htmlFor={`${importType}-csv`} value={`${importType === 'teachers' ? 'Teacher' : 'Student'} CSV file`} />
                             <input
                                 ref={fileInput}
-                                id="teacher-csv"
+                                id={`${importType}-csv`}
                                 type="file"
                                 accept=".csv,text/csv"
                                 onChange={(event) => setImportData('file', event.target.files?.[0] || null)}

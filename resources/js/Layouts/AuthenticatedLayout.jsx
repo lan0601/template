@@ -3,11 +3,11 @@ import Dropdown from '@/Components/Dropdown';
 import Dropdowntop from '@/Components/Dropdowntop';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
-import { Link, usePage, useRemember } from '@inertiajs/react';
+import { Link, router, usePage, useRemember } from '@inertiajs/react';
 import { useEffect } from 'react';
 
 export default function AuthenticatedLayout({ header, children }) {
-    const { user, permissions = {} } = usePage().props.auth;
+    const { user, permissions = {}, impersonating = false, impersonator } = usePage().props.auth;
     const currentRoute = route().current();
 
     const isDashboardActive = route().current('dashboard') || route().current('attendance') || route().current('schedule2') || route().current('campus-schedule') || route().current('cschedule');
@@ -45,7 +45,7 @@ export default function AuthenticatedLayout({ header, children }) {
             links: [
                 { name: 'Dashboard', routeName: 'dashboard', active: 'dashboard', permission: 'dashboard' },
                 { name: 'Attendance', routeName: 'attendance', active: 'attendance', permission: 'attendance' },
-                { name: 'Schedule', routeName: 'schedule2', active: 'schedule2', permission: 'schedule2' },
+                // { name: 'Schedule', routeName: 'schedule2', active: 'schedule2', permission: 'schedule2' },
                 { name: 'C Schedule', routeName: 'cschedule', active: 'cschedule', permission: 'cschedule' },
             ],
         },
@@ -61,25 +61,25 @@ export default function AuthenticatedLayout({ header, children }) {
                 { name: 'Rooms', routeName: 'classroom', active: 'classroom', permission: 'classroom' },
             ],
         },
-        {
-            title: 'Academic Setup',
-            isOpen: openAcademic,
-            setIsOpen: setOpenAcademic,
-            marginTop: true,
-            links: [
-                { name: 'Subject Offerings', routeName: 'subjectoffering', active: 'subjectoffering*', permission: 'subjectoffering' },
-                { name: 'Enrollment Subject', routeName: 'enrollmentsubject', active: 'enrollmentsubject*', permission: 'enrollmentsubject' },
-            ],
-        },
-        {
-            title: 'Transactions',
-            isOpen: openTransactions,
-            setIsOpen: setOpenTransactions,
-            marginTop: true,
-            links: [
-                { name: 'Enrollment', routeName: 'enroll', active: 'enroll', permission: 'enroll' },
-            ],
-        },
+        // {
+        //     title: 'Academic Setup',
+        //     isOpen: openAcademic,
+        //     setIsOpen: setOpenAcademic,
+        //     marginTop: true,
+        //     links: [
+        //         { name: 'Subject Offerings', routeName: 'subjectoffering', active: 'subjectoffering*', permission: 'subjectoffering' },
+        //         { name: 'Enrollment Subject', routeName: 'enrollmentsubject', active: 'enrollmentsubject*', permission: 'enrollmentsubject' },
+        //     ],
+        // },
+        // {
+        //     title: 'Transactions',
+        //     isOpen: openTransactions,
+        //     setIsOpen: setOpenTransactions,
+        //     marginTop: true,
+        //     links: [
+        //         { name: 'Enrollment', routeName: 'enroll', active: 'enroll', permission: 'enroll' },
+        //     ],
+        // },
     ];
 
     return (
@@ -166,6 +166,20 @@ export default function AuthenticatedLayout({ header, children }) {
                     </div>
                 </aside>
                 <main className="flex-1 p-4 md:p-6 bg-gray-100 overflow-y-auto">
+                    {impersonating && (
+                        <div className="mb-4 flex flex-col gap-3 rounded border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950 sm:flex-row sm:items-center sm:justify-between">
+                            <p>
+                                Viewing as <strong>{user.name}</strong>. Signed in originally as {impersonator?.name || 'administrator'}.
+                            </p>
+                            <button
+                                type="button"
+                                onClick={() => router.post(route('userrole.stop-impersonating'))}
+                                className="rounded bg-amber-800 px-3 py-2 font-medium text-white hover:bg-amber-900"
+                            >
+                                Return to admin account
+                            </button>
+                        </div>
+                    )}
                     {/* <header className="bg-white shadow">
                         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
                             {header}

@@ -38,6 +38,52 @@ test('teachers can be imported from a csv file', function () {
         ->and(Hash::check('NTC@edu.ph', $teacher->password))->toBeTrue();
 });
 
+test('students can be imported from a csv file', function () {
+    $response = $this->post(route('userrole.import-students'), [
+        'file' => UploadedFile::fake()->createWithContent(
+            'students.csv',
+            "name,email,lname,phone,campusID\nTaylor,taylor.student@example.com,Nguyen,555-0100,STU-100\n"
+        ),
+    ]);
+
+    $response->assertSessionHasNoErrors();
+    $response->assertSessionHas('success', '1 student(s) imported successfully.');
+
+    $student = User::where('email', 'taylor.student@example.com')->firstOrFail();
+    expect($student->name)->toBe('Taylor')
+        ->and($student->lname)->toBe('Nguyen')
+        ->and($student->phone)->toBe('555-0100')
+        ->and($student->campusID)->toBe('STU-100')
+        ->and($student->role)->toBe('Student')
+        ->and($student->userroleid)->toBe(Userrole::where('role_name', 'student')->value('id'))
+        ->and(Hash::check('NTC@edu.ph', $student->password))->toBeTrue();
+});
+
+test('student import reactivates a removed student when email and campus id are reused', function () {
+    $removedStudent = User::factory()->create([
+        'name' => 'Old Name',
+        'email' => 'returning.student@example.com',
+        'campusID' => 'STU-RETURN',
+        'role' => 'Student',
+        'remove' => 1,
+    ]);
+
+    $response = $this->post(route('userrole.import-students'), [
+        'file' => UploadedFile::fake()->createWithContent(
+            'students.csv',
+            "name,email,campusID\nReturning Student,returning.student@example.com,STU-RETURN\n"
+        ),
+    ]);
+
+    $response->assertSessionHasNoErrors();
+    $removedStudent->refresh();
+
+    expect(User::where('email', 'returning.student@example.com')->count())->toBe(1)
+        ->and($removedStudent->name)->toBe('Returning Student')
+        ->and($removedStudent->remove)->toBe(0)
+        ->and($removedStudent->role)->toBe('Student');
+});
+
 test('import reactivates a removed teacher when email and campus id are reused', function () {
     $removedTeacher = User::factory()->create([
         'name' => 'Old Name',

@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Userrole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -75,6 +76,8 @@ class UserroleController extends Controller
 
     public function importTeachers(Request $request)
     {
+        abort_unless(strtolower((string) $request->user()?->role) === 'admin', 403);
+
         $validated = $request->validate([
             'file' => ['required', 'file', 'mimes:csv,txt', 'max:10240'],
         ]);
@@ -208,6 +211,143 @@ class UserroleController extends Controller
         return back()->with('success', count($rows).' teacher(s) imported successfully.');
     }
 
+    public function importStudents(Request $request)
+    {
+        abort_unless(strtolower((string) $request->user()?->role) === 'admin', 403);
+
+        $validated = $request->validate([
+            'file' => ['required', 'file', 'mimes:csv,txt', 'max:10240'],
+        ]);
+
+        $handle = fopen($validated['file']->getRealPath(), 'r');
+        if ($handle === false) {
+            return back()->withErrors(['file' => 'The CSV file could not be read.']);
+        }
+
+        $headers = fgetcsv($handle);
+        if ($headers === false) {
+            fclose($handle);
+
+            return back()->withErrors(['file' => 'The CSV file is empty.']);
+        }
+
+        $headers = array_map(static function ($header) {
+            return strtolower(trim(preg_replace('/^\xEF\xBB\xBF/', '', (string) $header)));
+        }, $headers);
+
+        if (! in_array('name', $headers, true) || ! in_array('email', $headers, true) || count($headers) !== count(array_unique($headers))) {
+            fclose($handle);
+
+            return back()->withErrors(['file' => 'CSV headers must include unique name and email columns. lname, phone, and campusID are optional.']);
+        }
+
+        $rows = [];
+        $errors = [];
+        $seenEmails = [];
+        $seenCampusIds = [];
+        $lineNumber = 1;
+
+        while (($values = fgetcsv($handle)) !== false) {
+            $lineNumber++;
+
+            if (count($values) === 1 && trim((string) $values[0]) === '') {
+                continue;
+            }
+
+            if (count($values) !== count($headers)) {
+                $errors[] = "Row {$lineNumber} has a different number of columns than the header.";
+                continue;
+            }
+
+            $data = array_combine($headers, $values);
+            $student = [
+                'name' => trim((string) ($data['name'] ?? '')),
+                'lname' => trim((string) ($data['lname'] ?? '')),
+                'email' => strtolower(trim((string) ($data['email'] ?? ''))),
+                'phone' => trim((string) ($data['phone'] ?? '')),
+                'campusID' => trim((string) ($data['campusid'] ?? '')) ?: null,
+            ];
+
+            $validator = Validator::make($student, [
+                'name' => ['required', 'string', 'max:255'],
+                'lname' => ['nullable', 'string', 'max:255'],
+                'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->where(fn ($query) => $query->where('remove', 0))],
+                'phone' => ['nullable', 'string', 'max:20'],
+                'campusID' => ['nullable', 'string', 'max:50', Rule::unique('users', 'campusID')->where(fn ($query) => $query->where('remove', 0))],
+            ]);
+
+            if (isset($seenEmails[$student['email']])) {
+                $errors[] = "Row {$lineNumber} duplicates an email address in the CSV.";
+            }
+            $seenEmails[$student['email']] = true;
+
+            if ($student['campusID'] !== null) {
+                $campusKey = strtolower($student['campusID']);
+                if (isset($seenCampusIds[$campusKey])) {
+                    $errors[] = "Row {$lineNumber} duplicates a campus ID in the CSV.";
+                }
+                $seenCampusIds[$campusKey] = true;
+            }
+
+            if ($validator->fails()) {
+                foreach ($validator->errors()->all() as $error) {
+                    $errors[] = "Row {$lineNumber}: {$error}";
+                }
+
+                continue;
+            }
+
+            $rows[] = $student;
+        }
+
+        fclose($handle);
+
+        if ($errors !== []) {
+            return back()->withErrors(['file' => implode(' ', array_slice($errors, 0, 10))]);
+        }
+
+        if ($rows === []) {
+            return back()->withErrors(['file' => 'The CSV contains no student rows to import.']);
+        }
+
+        DB::transaction(function () use ($rows) {
+            $studentRole = Userrole::firstOrCreate(
+                ['role_name' => 'student'],
+                ['id' => 2, 'permissions' => []]
+            );
+
+            foreach ($rows as $student) {
+                $emailMatch = User::where('email', $student['email'])->first();
+                $campusMatch = $student['campusID'] === null
+                    ? null
+                    : User::where('campusID', $student['campusID'])->first();
+                $existingUser = $emailMatch?->remove
+                    ? $emailMatch
+                    : ($campusMatch?->remove ? $campusMatch : null);
+
+                if ($existingUser && $campusMatch && $campusMatch->id !== $existingUser->id) {
+                    $campusMatch->update(['campusID' => null]);
+                }
+
+                $attributes = [
+                    ...$student,
+                    'role' => 'Student',
+                    'userroleid' => $studentRole->id,
+                    'password' => Hash::make('NTC@edu.ph'),
+                    'remove' => 0,
+                ];
+
+                if ($existingUser) {
+                    $existingUser->update($attributes);
+                } else {
+                    User::create($attributes);
+                }
+            }
+        });
+
+        return back()->with('success', count($rows).' student(s) imported successfully.');
+    }
+
     /**
      * Update the specified resource in storage.
      */
@@ -248,6 +388,35 @@ class UserroleController extends Controller
         $user->update(['remove' => 1]);
 
         return back()->with('success', 'User deleted successfully.');
+    }
+
+    public function impersonate(Request $request, User $user)
+    {
+        abort_unless(strtolower((string) $request->user()?->role) === 'admin', 403);
+        abort_if($request->session()->has('impersonator_id'), 403);
+        abort_if($user->remove || strtolower((string) $user->role) === 'admin', 404);
+
+        $request->session()->put('impersonator_id', $request->user()->id);
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        return redirect()->route('dashboard');
+    }
+
+    public function stopImpersonating(Request $request)
+    {
+        $admin = User::query()
+            ->whereKey($request->session()->get('impersonator_id'))
+            ->where('remove', 0)
+            ->first();
+
+        abort_unless($admin && strtolower((string) $admin->role) === 'admin', 403);
+
+        Auth::login($admin);
+        $request->session()->forget('impersonator_id');
+        $request->session()->regenerate();
+
+        return redirect()->route('userrole');
     }
 
     public function permissions()

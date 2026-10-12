@@ -111,6 +111,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/attendance/scan', [AttendanceController::class, 'scan'])->name('attendance.scan');
     Route::get('/attendance/external-subject/{subjectCode}/students', [AttendanceController::class, 'externalSubjectStudents'])->name('attendance.external-subject.students');
     Route::post('/attendance/external-subject/{subjectCode}/mark', [AttendanceController::class, 'markExternalStudentAttendance'])->name('attendance.external-subject.mark');
+    Route::delete('/attendance/external-subject/{subjectCode}/cancel', [AttendanceController::class, 'cancelExternalStudentAttendance'])->name('attendance.external-subject.cancel');
+    Route::post('/attendance/external-subject/{subjectCode}/qr', [AttendanceController::class, 'externalSubjectQr'])->name('attendance.external-subject.qr');
     Route::get('/attendance/subject/{subjectOffering}/qr', [AttendanceController::class, 'subjectQr'])->name('attendance.subject.qr');
     Route::get('/attendance/subject/{subjectOffering}/students', [AttendanceController::class, 'subjectStudents'])->name('attendance.subject.students');
     Route::post('/attendance/subject/{subjectOffering}/mark', [AttendanceController::class, 'markStudentAttendance'])->name('attendance.subject.mark');
@@ -152,11 +154,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/userrole/create', [UserroleController::class, 'create'])->name('userrole.create');
     Route::post('/userrole', [UserroleController::class, 'store'])->name('userrole.store');
     Route::post('/userrole/import-teachers', [UserroleController::class, 'importTeachers'])->name('userrole.import-teachers');
+    Route::post('/userrole/import-students', [UserroleController::class, 'importStudents'])->name('userrole.import-students');
+    Route::post('/userrole/{user}/impersonate', [UserroleController::class, 'impersonate'])->name('userrole.impersonate');
     Route::get('/userrole/access', [UserroleController::class, 'permissions'])->name('userrole.permissions');
     Route::post('/userrole/access', [UserroleController::class, 'savePermissions'])->name('userrole.permissions.store');
     Route::patch('/userrole/{user}', [UserroleController::class, 'update'])->name('userrole.update');
     Route::delete('/userrole/{user}', [UserroleController::class, 'destroy'])->name('userrole.destroy');
 });
+
+Route::post('/userrole/stop-impersonating', [UserroleController::class, 'stopImpersonating'])
+    ->middleware('auth')
+    ->name('userrole.stop-impersonating');
 
 // Subject Offering routes ---------------------------------------
 Route::middleware(['auth', 'verified'])->group(function () {
