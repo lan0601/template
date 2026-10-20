@@ -34,7 +34,7 @@ export default function Modal({
                     leaveFrom="opacity-100"
                     leaveTo="opacity-0"
                 >
-                    <div className="fixed inset-0 bg-gray-500/75" />
+                    <div className="fixed inset-0 bg-slate-950/55 backdrop-blur-[2px]" />
                 </TransitionChild>
 
                 {/* Modal panel */}
@@ -48,7 +48,7 @@ export default function Modal({
                     leaveTo="opacity-0 scale-95"
                 >
                     <DialogPanel
-                        className={`z-50 w-full transform overflow-hidden rounded-lg bg-white shadow-xl transition-all ${maxWidthClass}`}
+                        className={`z-50 w-full transform overflow-hidden rounded-md border border-slate-200 bg-white text-slate-900 shadow-2xl shadow-slate-950/20 transition-all dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 ${maxWidthClass}`}
                     >
                         {children}
                     </DialogPanel>

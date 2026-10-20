@@ -59,6 +59,22 @@ test('students can be imported from a csv file', function () {
         ->and(Hash::check('NTC@edu.ph', $student->password))->toBeTrue();
 });
 
+test('students are imported across multiple insert batches', function () {
+    $csv = ["name,email,campusID"];
+    for ($index = 1; $index <= 161; $index++) {
+        $csv[] = "Student {$index},student{$index}@example.com,STU-{$index}";
+    }
+
+    $response = $this->post(route('userrole.import-students'), [
+        'file' => UploadedFile::fake()->createWithContent('students.csv', implode("\n", $csv)),
+    ]);
+
+    $response->assertSessionHasNoErrors();
+    $response->assertSessionHas('success', '161 student(s) imported successfully.');
+    expect(User::where('role', 'Student')->count())->toBe(161)
+        ->and(User::where('email', 'student161@example.com')->exists())->toBeTrue();
+});
+
 test('student import reactivates a removed student when email and campus id are reused', function () {
     $removedStudent = User::factory()->create([
         'name' => 'Old Name',

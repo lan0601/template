@@ -69,15 +69,10 @@ const Content = ({
                 leaveTo="opacity-0 scale-95"
             >
                 <div
-                    className={`absolute z-50 bottom-full rounded-md shadow-lg ${alignmentClasses} ${widthClasses}`}
+                    className={`dropdown-menu-surface absolute z-50 bottom-full mb-2 overflow-hidden rounded-md border border-slate-200 bg-white shadow-xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-900 ${alignmentClasses} ${widthClasses}`}
                     onClick={() => setOpen(false)}
                 >
-                    <div
-                        className={
-                            `rounded-md ring-1 ring-black ring-opacity-5 ` +
-                            contentClasses
-                        }
-                    >
+                    <div className={`py-1 ${contentClasses.replace('py-1', '').replace('bg-white', '')}`}>
                         {children}
                     </div>
                 </div>
@@ -91,7 +86,7 @@ const DropdownLink = ({ className = '', children, ...props }) => {
         <Link
             {...props}
             className={
-                'block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 transition duration-150 ease-in-out hover:bg-gray-100 focus:bg-gray-100 focus:outline-none ' +
+                'dropdown-menu-item block w-full px-4 py-2.5 text-start text-sm font-medium text-slate-700 transition duration-150 ease-in-out hover:bg-blue-50 hover:text-slate-950 focus:bg-blue-50 focus:text-slate-950 focus:outline-none dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white dark:focus:bg-slate-800 dark:focus:text-white ' +
                 className
             }
         >

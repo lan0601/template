@@ -268,14 +268,6 @@ class UserroleController extends Controller
                 'campusID' => trim((string) ($data['campusid'] ?? '')) ?: null,
             ];
 
-            $validator = Validator::make($student, [
-                'name' => ['required', 'string', 'max:255'],
-                'lname' => ['nullable', 'string', 'max:255'],
-                'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->where(fn ($query) => $query->where('remove', 0))],
-                'phone' => ['nullable', 'string', 'max:20'],
-                'campusID' => ['nullable', 'string', 'max:50', Rule::unique('users', 'campusID')->where(fn ($query) => $query->where('remove', 0))],
-            ]);
-
             if (isset($seenEmails[$student['email']])) {
                 $errors[] = "Row {$lineNumber} duplicates an email address in the CSV.";
             }
@@ -289,18 +281,28 @@ class UserroleController extends Controller
                 $seenCampusIds[$campusKey] = true;
             }
 
-            if ($validator->fails()) {
-                foreach ($validator->errors()->all() as $error) {
-                    $errors[] = "Row {$lineNumber}: {$error}";
-                }
-
-                continue;
-            }
-
-            $rows[] = $student;
+            $rows[] = ['data' => $student, 'line' => $lineNumber];
         }
 
         fclose($handle);
+
+        foreach (array_chunk($rows, 500) as $rowBatch) {
+            $validator = Validator::make(array_column($rowBatch, 'data'), [
+                '*.name' => ['required', 'string', 'max:255'],
+                '*.lname' => ['nullable', 'string', 'max:255'],
+                '*.email' => ['required', 'string', 'email', 'max:255'],
+                '*.phone' => ['nullable', 'string', 'max:20'],
+                '*.campusID' => ['nullable', 'string', 'max:50'],
+            ]);
+
+            foreach ($validator->errors()->messages() as $attribute => $messages) {
+                $batchIndex = (int) explode('.', $attribute, 2)[0];
+                $sourceLine = $rowBatch[$batchIndex]['line'];
+                foreach ($messages as $message) {
+                    $errors[] = "Row {$sourceLine}: {$message}";
+                }
+            }
+        }
 
         if ($errors !== []) {
             return back()->withErrors(['file' => implode(' ', array_slice($errors, 0, 10))]);
@@ -310,38 +312,108 @@ class UserroleController extends Controller
             return back()->withErrors(['file' => 'The CSV contains no student rows to import.']);
         }
 
-        DB::transaction(function () use ($rows) {
+        $matchedUsers = collect();
+        foreach (array_chunk($rows, 400) as $rowBatch) {
+            $emails = array_column(array_column($rowBatch, 'data'), 'email');
+            $campusIds = array_values(array_filter(array_column(array_column($rowBatch, 'data'), 'campusID')));
+
+            $matchedUsers = $matchedUsers->merge(User::query()
+                ->where(function ($query) use ($emails, $campusIds) {
+                    if ($emails !== []) {
+                        $query->whereIn('email', $emails);
+                    }
+                    if ($campusIds !== []) {
+                        $emails === []
+                            ? $query->whereIn('campusID', $campusIds)
+                            : $query->orWhereIn('campusID', $campusIds);
+                    }
+                })
+                ->get(['id', 'email', 'campusID', 'remove', 'created_at']));
+        }
+
+        $usersByEmail = $matchedUsers->filter(fn ($user) => $user->email !== null)
+            ->keyBy(fn ($user) => strtolower($user->email));
+        $usersByCampusId = $matchedUsers->filter(fn ($user) => $user->campusID !== null)
+            ->keyBy(fn ($user) => strtolower($user->campusID));
+
+        foreach ($rows as $row) {
+            $student = $row['data'];
+            $emailMatch = $usersByEmail->get($student['email']);
+            $campusMatch = $student['campusID'] === null
+                ? null
+                : $usersByCampusId->get(strtolower($student['campusID']));
+
+            if ($emailMatch && ! $emailMatch->remove) {
+                $errors[] = "Row {$row['line']}: The email has already been taken.";
+            }
+            if ($campusMatch && ! $campusMatch->remove) {
+                $errors[] = "Row {$row['line']}: The campus id has already been taken.";
+            }
+        }
+
+        if ($errors !== []) {
+            return back()->withErrors(['file' => implode(' ', array_slice($errors, 0, 10))]);
+        }
+
+        $passwordHash = Hash::make('NTC@edu.ph');
+
+        DB::transaction(function () use ($rows, $usersByEmail, $usersByCampusId, $passwordHash) {
             $studentRole = Userrole::firstOrCreate(
                 ['role_name' => 'student'],
                 ['id' => 2, 'permissions' => []]
             );
+            $newStudents = [];
+            $reactivatedStudents = [];
+            $timestamp = now();
 
-            foreach ($rows as $student) {
-                $emailMatch = User::where('email', $student['email'])->first();
+            foreach ($rows as $row) {
+                $student = $row['data'];
+                $emailMatch = $usersByEmail->get($student['email']);
                 $campusMatch = $student['campusID'] === null
                     ? null
-                    : User::where('campusID', $student['campusID'])->first();
+                    : $usersByCampusId->get(strtolower($student['campusID']));
                 $existingUser = $emailMatch?->remove
                     ? $emailMatch
                     : ($campusMatch?->remove ? $campusMatch : null);
 
                 if ($existingUser && $campusMatch && $campusMatch->id !== $existingUser->id) {
-                    $campusMatch->update(['campusID' => null]);
+                    $reactivatedStudents[] = [
+                        'id' => $campusMatch->id,
+                        'campusID' => null,
+                        'updated_at' => $timestamp,
+                    ];
                 }
 
                 $attributes = [
                     ...$student,
                     'role' => 'Student',
                     'userroleid' => $studentRole->id,
-                    'password' => Hash::make('NTC@edu.ph'),
+                    'password' => $passwordHash,
                     'remove' => 0,
                 ];
 
                 if ($existingUser) {
-                    $existingUser->update($attributes);
+                    $reactivatedStudents[] = [
+                        ...$attributes,
+                        'id' => $existingUser->id,
+                        'created_at' => $existingUser->created_at,
+                        'updated_at' => $timestamp,
+                    ];
                 } else {
-                    User::create($attributes);
+                    $newStudents[] = [
+                        ...$attributes,
+                        'created_at' => $timestamp,
+                        'updated_at' => $timestamp,
+                    ];
                 }
+            }
+
+            foreach (array_chunk($reactivatedStudents, 80) as $batch) {
+                User::upsert($batch, ['id'], ['name', 'lname', 'email', 'phone', 'campusID', 'password', 'role', 'userroleid', 'remove', 'updated_at']);
+            }
+
+            foreach (array_chunk($newStudents, 80) as $batch) {
+                User::insert($batch);
             }
         });
 

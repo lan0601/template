@@ -10,6 +10,15 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
+        <script>
+            (() => {
+                const theme = localStorage.getItem('scheduler-theme');
+                const useDarkTheme = theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                document.documentElement.classList.toggle('dark', useDarkTheme);
+                document.documentElement.style.colorScheme = useDarkTheme ? 'dark' : 'light';
+            })();
+        </script>
+
         <!-- Scripts -->
         @routes
         @viteReactRefresh
