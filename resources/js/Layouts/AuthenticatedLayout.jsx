@@ -35,22 +35,15 @@ export default function AuthenticatedLayout({ header, children }) {
     const currentRoute = route().current();
 
     const isDashboardActive = route().current('dashboard') || route().current('attendance') || route().current('schedule2') || route().current('campus-schedule') || route().current('cschedule');
-    const isMasterActive = route().current('userrole*') || route().current('subject') || route().current('section*') || route().current('classroom*');
-    const isAcademicActive = route().current('subjectoffering*') || route().current('enrollmentsubject*');
-    const isTransactionsActive = route().current('enroll*');
+   
 
     const [showNav, setShowNav] = useRemember(true, 'showNav');
     const [navCollapsed, setNavCollapsed] = useRemember(false, 'navCollapsed');
     const [openDashboard, setOpenDashboard] = useRemember(isDashboardActive, 'openDashboard');
-    const [openMaster, setOpenMaster] = useRemember(isMasterActive, 'openMaster');
-    const [openAcademic, setOpenAcademic] = useRemember(isAcademicActive, 'openAcademic');
-    const [openTransactions, setOpenTransactions] = useRemember(isTransactionsActive, 'openTransactions');
 
     useEffect(() => {
         if (isDashboardActive) setOpenDashboard(true);
-        if (isMasterActive) setOpenMaster(true);
-        if (isAcademicActive) setOpenAcademic(true);
-        if (isTransactionsActive) setOpenTransactions(true);
+       
     }, [currentRoute]);
 
 
@@ -69,42 +62,8 @@ export default function AuthenticatedLayout({ header, children }) {
             setIsOpen: setOpenDashboard,
             links: [
                 { name: 'Dashboard', routeName: 'dashboard', active: 'dashboard', permission: 'dashboard' },
-                { name: 'Attendance', routeName: 'attendance', active: 'attendance', permission: 'attendance' },
-                // { name: 'Schedule', routeName: 'schedule2', active: 'schedule2', permission: 'schedule2' },
-                { name: 'C Schedule', routeName: 'cschedule', active: 'cschedule', permission: 'cschedule' },
             ],
         },
-        {
-            title: 'Master Data',
-            isOpen: openMaster,
-            setIsOpen: setOpenMaster,
-            marginTop: true,
-            links: [
-                { name: 'Users', routeName: 'userrole', active: 'userrole', permission: 'userrole' },
-                { name: 'Subjects', routeName: 'subject', active: 'subject', permission: 'subject' },
-                { name: 'Sections', routeName: 'section', active: 'section', permission: 'section' },
-                { name: 'Rooms', routeName: 'classroom', active: 'classroom', permission: 'classroom' },
-            ],
-        },
-        // {
-        //     title: 'Academic Setup',
-        //     isOpen: openAcademic,
-        //     setIsOpen: setOpenAcademic,
-        //     marginTop: true,
-        //     links: [
-        //         { name: 'Subject Offerings', routeName: 'subjectoffering', active: 'subjectoffering*', permission: 'subjectoffering' },
-        //         { name: 'Enrollment Subject', routeName: 'enrollmentsubject', active: 'enrollmentsubject*', permission: 'enrollmentsubject' },
-        //     ],
-        // },
-        // {
-        //     title: 'Transactions',
-        //     isOpen: openTransactions,
-        //     setIsOpen: setOpenTransactions,
-        //     marginTop: true,
-        //     links: [
-        //         { name: 'Enrollment', routeName: 'enroll', active: 'enroll', permission: 'enroll' },
-        //     ],
-        // },
     ];
 
     return (
