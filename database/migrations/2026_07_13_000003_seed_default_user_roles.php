@@ -8,7 +8,7 @@ return new class extends Migration
     public function up(): void
     {
         $roles = [
-            ['role_name' => 'admin', 'permissions' => ["dashboard" => true, "attendance" => true, "enroll" => true, "schedule" => true, "classroom" => true, "subject" => true, "users" => true]],
+            ['role_name' => 'admin', 'permissions' => ['users' => true, 'user_roles' => true]],
             ['role_name' => 'student', 'permissions' => []],
             ['role_name' => 'teacher', 'permissions' => []],
             ['role_name' => 'guest', 'permissions' => []],

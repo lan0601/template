@@ -59,7 +59,6 @@ class RegisteredUserController extends Controller
             'name' => trim($validated['name']),
             'lname' => trim($validated['lname'] ?? 'User'),
             'email' => $validated['email'],
-            'role' => $roleName,
             'userroleid' => $role->id,
             'phone' => trim($validated['phone'] ?? ''),
             'password' => Hash::make($validated['password']),

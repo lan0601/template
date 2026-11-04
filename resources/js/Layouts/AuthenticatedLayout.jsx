@@ -34,15 +34,17 @@ export default function AuthenticatedLayout({ header, children }) {
     const { user, permissions = {}, impersonating = false, impersonator } = usePage().props.auth;
     const currentRoute = route().current();
 
-    const isDashboardActive = route().current('dashboard') || route().current('attendance') || route().current('schedule2') || route().current('campus-schedule') || route().current('cschedule');
-   
+    const isDashboardActive = route().current('dashboard');
+    const isAdminActive = route().current('admin.*');
 
     const [showNav, setShowNav] = useRemember(true, 'showNav');
     const [navCollapsed, setNavCollapsed] = useRemember(false, 'navCollapsed');
     const [openDashboard, setOpenDashboard] = useRemember(isDashboardActive, 'openDashboard');
+    const [openAdmin, setOpenAdmin] = useRemember(isAdminActive, 'openAdmin');
 
     useEffect(() => {
         if (isDashboardActive) setOpenDashboard(true);
+        if (isAdminActive) setOpenAdmin(true);
        
     }, [currentRoute]);
 
@@ -62,6 +64,15 @@ export default function AuthenticatedLayout({ header, children }) {
             setIsOpen: setOpenDashboard,
             links: [
                 { name: 'Dashboard', routeName: 'dashboard', active: 'dashboard', permission: 'dashboard' },
+            ],
+        },
+        {
+            title: 'Admin',
+            isOpen: openAdmin,
+            setIsOpen: setOpenAdmin,
+            links: [
+                { name: 'Users', routeName: 'admin.users.index', active: 'admin.users.*', permission: 'users' },
+                { name: 'User Roles', routeName: 'admin.user-roles.index', active: 'admin.user-roles.*', permission: 'user_roles' },
             ],
         },
     ];
@@ -84,7 +95,7 @@ export default function AuthenticatedLayout({ header, children }) {
                     </div>
                     <Link href="/" className="flex items-center gap-2">
                         <ApplicationLogo className="h-8 w-auto fill-current text-blue-700" />
-                        <span className="text-base font-bold text-slate-900 dark:text-slate-100">Attendance Web Portal</span>
+                        <span className="text-base font-bold text-slate-900 dark:text-slate-100">Project X</span>
                     </Link>
                 </div>
 
@@ -92,7 +103,7 @@ export default function AuthenticatedLayout({ header, children }) {
                     <div className={`flex h-[76px] items-center justify-between border-b border-slate-200 dark:border-slate-700 ${navCollapsed ? 'px-2 md:flex-col md:justify-center md:gap-1' : 'px-5'}`}>
                         <Link href="/" className={`flex min-w-0 items-center gap-2 ${navCollapsed ? 'md:justify-center' : ''}`}>
                             <ApplicationLogo className={`w-auto fill-current text-blue-700 ${navCollapsed ? 'h-9 md:h-8' : 'h-9'}`} />
-                            <span className={`text-lg font-bold tracking-normal text-slate-900 dark:text-slate-100 ${navCollapsed ? 'md:hidden' : ''}`}>Attendance Portal</span>
+                            <span className={`text-lg font-bold tracking-normal text-slate-900 dark:text-slate-100 ${navCollapsed ? 'md:hidden' : ''}`}>Project X</span>
                         </Link>
                         <div className="hidden md:block">
                             <button

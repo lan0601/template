@@ -16,10 +16,13 @@ return new class extends Migration
             $table->string('name');
             $table->string('lname')->nullable();
             $table->string('email')->unique();
-            $table->string('role')->default('guest');
+            $table->string('phone')->nullable();
+            $table->string('campusID')->nullable()->unique();
+            $table->json('permissions')->nullable();
             $table->unsignedBigInteger('userroleid')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->boolean('remove')->default(false);
             $table->rememberToken();
             $table->timestamps();
         });

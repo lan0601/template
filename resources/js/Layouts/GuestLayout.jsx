@@ -11,7 +11,7 @@ export default function GuestLayout({ children }) {
             <div className="mb-5 text-center">
                 <Link href="/" className="inline-flex items-center gap-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
                     <ApplicationLogo className="h-12 w-auto fill-current text-blue-700" />
-                    <span className="text-xl font-bold text-slate-900 dark:text-slate-100">Attendance Web Portal</span>
+                    <span className="text-xl font-bold text-slate-900 dark:text-slate-100">Project X</span>
                 </Link>
             </div>
 
