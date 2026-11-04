@@ -17,7 +17,6 @@ function UserForm({ user, roles, onCancel }) {
     });
 
     useEffect(() => () => reset('password', 'password_confirmation'), []);
-
     const submit = (event) => {
         event.preventDefault();
         const options = { onSuccess: onCancel };
@@ -76,6 +75,7 @@ export default function Users({ users, roles = [], user = null }) {
                         <tr>
                             <th className="px-5 py-3">Name</th>
                             <th className="px-5 py-3">Email</th>
+                            <th className="px-5 py-3">CampusID</th>
                             <th className="px-5 py-3">Role</th>
                             <th className="px-5 py-3">Status</th>
                             <th className="px-5 py-3 text-right">Actions</th>
@@ -86,6 +86,7 @@ export default function Users({ users, roles = [], user = null }) {
                             <tr key={item.id} className="border-b border-slate-100 dark:border-slate-800">
                                 <td className="px-5 py-4 font-medium">{item.name} {item.lname}</td>
                                 <td className="px-5 py-4">{item.email}</td>
+                                <td className="px-5 py-4">{item.campusID}</td>
                                 <td className="px-5 py-4 capitalize">{item.user_role?.role_name ?? 'Unassigned'}</td>
                                 <td className="px-5 py-4">{item.remove ? 'Removed' : 'Active'}</td>
                                 <td className="px-5 py-4 text-right">

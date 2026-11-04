@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Models\Userrole;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -13,6 +14,11 @@ class AdminUserSeeder extends Seeder
      */
     public function run(): void
     {
+        $masterAdminRoleId = Userrole::query()
+            ->where('role_name', env('MASTER_ADMIN_ROLE', 'admin'))
+            ->firstOrFail()
+            ->id;
+
         User::updateOrCreate(
             ['email' => env('MASTER_ADMIN_EMAIL')],
             [
@@ -20,7 +26,7 @@ class AdminUserSeeder extends Seeder
                 'password' => Hash::make(
                     env('MASTER_ADMIN_PASSWORD')
                 ),
-                'userroleid' => 1,
+                'userroleid' => $masterAdminRoleId,
             ]
         );
     }

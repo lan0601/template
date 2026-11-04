@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Userrole;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -31,7 +32,10 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
 
-        $rolePermissions = $user?->userRole?->permissions ?? $user?->permissions ?? [];
+        $isAdmin = strtolower((string) $user?->role) === 'admin';
+        $rolePermissions = $isAdmin
+            ? array_fill_keys(array_keys(Userrole::MODULES), true)
+            : ($user?->userRole?->permissions ?? $user?->permissions ?? []);
 
         return [
             ...parent::share($request),

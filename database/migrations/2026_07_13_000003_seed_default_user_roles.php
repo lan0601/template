@@ -9,9 +9,6 @@ return new class extends Migration
     {
         $roles = [
             ['role_name' => 'admin', 'permissions' => ['users' => true, 'user_roles' => true]],
-            ['role_name' => 'student', 'permissions' => []],
-            ['role_name' => 'teacher', 'permissions' => []],
-            ['role_name' => 'guest', 'permissions' => []],
         ];
 
         foreach ($roles as $index => $role) {
@@ -42,6 +39,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        DB::table('user_roles')->whereIn('id', [1, 2, 3, 4])->delete();
+        DB::table('user_roles')->where('role_name', 'admin')->delete();
     }
 };

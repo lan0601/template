@@ -11,6 +11,7 @@ class Userrole extends Model
     use HasFactory;
 
     public const MODULES = [
+        'dashboard' => 'Dashboard',
         'users' => 'Users',
         'user_roles' => 'User Roles',
     ];

@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserRoleController;
+use App\Http\Controllers\Report\SoaController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -33,6 +34,10 @@ Route::middleware(['auth', 'admin:users'])->prefix('admin')->name('admin.')->gro
 
 Route::middleware(['auth', 'admin:user_roles'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('user-roles', UserRoleController::class)->except('show');
+});
+
+Route::middleware(['auth', 'report:soa'])->prefix('report')->name('report.')->group(function () {
+    Route::resource('soa', SoaController::class)->except('show');
 });
 
 require __DIR__.'/auth.php';

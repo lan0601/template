@@ -96,6 +96,7 @@ function RoleForm({ role, modules, onCancel }) {
 export default function UserRoles({ roles = [], modules, role = null }) {
     const [showForm, setShowForm] = useState(Boolean(role));
     const { flash } = usePage().props;
+                    console.log(modules,role)
 
     useEffect(() => setShowForm(Boolean(role)), [role]);
 
@@ -127,6 +128,7 @@ export default function UserRoles({ roles = [], modules, role = null }) {
                         {flash.success}
                     </div>
                 )}
+                
                 {showForm && (
                     <RoleForm
                         role={role}
