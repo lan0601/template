@@ -35,18 +35,18 @@ export default function AuthenticatedLayout({ header, children }) {
     const currentRoute = route().current();
 
     const isDashboardActive = route().current('dashboard');
-    const isReportActive = route().current('report.*');
+    // const isReportActive = route().current('report.*');
     const isAdminActive = route().current('admin.*');
 
     const [showNav, setShowNav] = useRemember(true, 'showNav');
     const [navCollapsed, setNavCollapsed] = useRemember(false, 'navCollapsed');
     const [openDashboard, setOpenDashboard] = useRemember(isDashboardActive, 'openDashboard');
-    const [openReport, setOpenReport] = useRemember(isReportActive, 'openReport');
+    // const [openReport, setOpenReport] = useRemember(isReportActive, 'openReport');
     const [openAdmin, setOpenAdmin] = useRemember(isAdminActive, 'openAdmin');
 
     useEffect(() => {
         if (isDashboardActive) setOpenDashboard(true);
-        if (isReportActive) setOpenReport(true);
+        // if (isReportActive) setOpenReport(true);
         if (isAdminActive) setOpenAdmin(true);
        
     }, [currentRoute]);
@@ -69,14 +69,14 @@ export default function AuthenticatedLayout({ header, children }) {
                 { name: 'Dashboard', routeName: 'dashboard', active: 'dashboard', permission: 'dashboard' },
             ],
         },
-        {
-            title: 'Report',
-            isOpen: openReport,
-            setIsOpen: setOpenReport,
-            links: [
-                { name: 'SOA', routeName: 'report.soa.index', active: 'report.soa.*', permission: 'soa' },
-            ],
-        },
+        // {
+        //     title: 'Report',
+        //     isOpen: openReport,
+        //     setIsOpen: setOpenReport,
+        //     links: [
+        //         { name: 'SOA', routeName: 'report.soa.index', active: 'report.soa.*', permission: 'soa' },
+        //     ],
+        // },
         {
             title: 'Admin',
             isOpen: openAdmin,

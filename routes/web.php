@@ -36,8 +36,4 @@ Route::middleware(['auth', 'admin:user_roles'])->prefix('admin')->name('admin.')
     Route::resource('user-roles', UserRoleController::class)->except('show');
 });
 
-Route::middleware(['auth', 'report:soa'])->prefix('report')->name('report.')->group(function () {
-    Route::resource('soa', SoaController::class)->except('show');
-});
-
 require __DIR__.'/auth.php';
